@@ -1,22 +1,22 @@
 /**
  * Redis Cache Store
- * 
+ *
  * Redis-backed cache implementation with support for tagging.
  * Uses @abdokouta/redis (Upstash) for browser-compatible Redis access.
- * 
+ *
  * **Features:**
  * - Persistent caching across application restarts
  * - Cache tagging support
  * - Atomic increment/decrement operations
  * - TTL support at the Redis level
  * - Distributed caching (multiple servers can share cache)
- * 
+ *
  * **Use Cases:**
  * - Production applications
  * - Distributed systems
  * - When cache persistence is required
  * - When cache tagging is needed
- * 
+ *
  * @module stores/redis
  */
 
@@ -26,9 +26,9 @@ import { TaggedCache as TaggedCacheImpl } from '@/tags/tagged-cache';
 
 /**
  * Redis cache store implementation
- * 
+ *
  * Provides a Redis-backed cache with tagging support.
- * 
+ *
  * @example
  * ```typescript
  * const redis = await redisManager.connection('cache');
@@ -37,11 +37,11 @@ import { TaggedCache as TaggedCacheImpl } from '@/tags/tagged-cache';
  *   prefix: 'app_',
  *   ttl: 3600
  * });
- * 
+ *
  * // Basic caching
  * await store.put('user:123', { name: 'John' }, 3600);
  * const user = await store.get('user:123');
- * 
+ *
  * // Tagged caching
  * const taggedCache = store.tags(['users', 'premium']);
  * await taggedCache.put('user:456', { name: 'Jane' }, 3600);
@@ -49,19 +49,19 @@ import { TaggedCache as TaggedCacheImpl } from '@/tags/tagged-cache';
  * ```
  */
 export class RedisStore implements TaggableStore {
-  /** 
- * Redis connection 
- */
+  /**
+   * Redis connection
+   */
   private readonly redis: RedisConnection;
-  
-  /** 
- * Cache key prefix 
- */
+
+  /**
+   * Cache key prefix
+   */
   private readonly prefix: string;
 
   /**
    * Create a new Redis store
-   * 
+   *
    * @param config - Store configuration
    */
   constructor(config: RedisStoreConfig) {
@@ -71,10 +71,10 @@ export class RedisStore implements TaggableStore {
 
   /**
    * Retrieve an item from the cache
-   * 
+   *
    * @param key - Cache key
    * @returns The cached value, or undefined if not found
-   * 
+   *
    * @example
    * ```typescript
    * const user = await store.get('user:123');
@@ -82,20 +82,20 @@ export class RedisStore implements TaggableStore {
    */
   async get(key: string): Promise<any> {
     const value = await this.redis.get(this.prefix + key);
-    
+
     if (value === null) {
       return undefined;
     }
-    
+
     return this.deserialize(value);
   }
 
   /**
    * Retrieve multiple items from the cache
-   * 
+   *
    * @param keys - Array of cache keys
    * @returns Object mapping keys to values
-   * 
+   *
    * @example
    * ```typescript
    * const data = await store.many(['user:1', 'user:2', 'user:3']);
@@ -106,9 +106,9 @@ export class RedisStore implements TaggableStore {
       return {};
     }
 
-    const prefixedKeys = keys.map(key => this.prefix + key);
+    const prefixedKeys = keys.map((key) => this.prefix + key);
     const values = await this.redis.mget(...prefixedKeys);
-    
+
     const results: Record<string, any> = {};
     for (let i = 0; i < keys.length; i++) {
       const key = keys[i];
@@ -116,18 +116,18 @@ export class RedisStore implements TaggableStore {
         results[key] = values[i] !== null ? this.deserialize(values[i]!) : undefined;
       }
     }
-    
+
     return results;
   }
 
   /**
    * Store an item in the cache
-   * 
+   *
    * @param key - Cache key
    * @param value - Value to cache
    * @param seconds - TTL in seconds
    * @returns True if successful
-   * 
+   *
    * @example
    * ```typescript
    * await store.put('user:123', { name: 'John' }, 3600);
@@ -136,19 +136,19 @@ export class RedisStore implements TaggableStore {
   async put(key: string, value: any, seconds: number): Promise<boolean> {
     const serialized = this.serialize(value);
     const result = await this.redis.set(this.prefix + key, serialized, { ex: seconds });
-    
+
     return result === 'OK';
   }
 
   /**
    * Store multiple items in the cache
-   * 
+   *
    * Note: Redis MSET doesn't support TTL, so we set TTL separately for each key.
-   * 
+   *
    * @param values - Object mapping keys to values
    * @param seconds - TTL in seconds
    * @returns True if successful
-   * 
+   *
    * @example
    * ```typescript
    * await store.putMany({
@@ -167,12 +167,12 @@ export class RedisStore implements TaggableStore {
     for (const [key, value] of Object.entries(values)) {
       serializedValues[this.prefix + key] = this.serialize(value);
     }
-    
+
     await this.redis.mset(serializedValues);
-    
+
     // Set TTL for each key (Redis doesn't support TTL in MSET)
     await Promise.all(
-      Object.keys(values).map(key => {
+      Object.keys(values).map((key) => {
         const serializedValue = serializedValues[this.prefix + key];
         if (serializedValue !== undefined) {
           return this.redis.set(this.prefix + key, serializedValue, { ex: seconds });
@@ -180,19 +180,19 @@ export class RedisStore implements TaggableStore {
         return Promise.resolve();
       })
     );
-    
+
     return true;
   }
 
   /**
    * Increment a numeric value in the cache
-   * 
+   *
    * Uses Redis INCRBY for atomic operations.
-   * 
+   *
    * @param key - Cache key
    * @param value - Amount to increment by (default: 1)
    * @returns The new value after incrementing
-   * 
+   *
    * @example
    * ```typescript
    * await store.increment('page:views');      // 1
@@ -203,19 +203,19 @@ export class RedisStore implements TaggableStore {
     if (value === 1) {
       return this.redis.incr(this.prefix + key);
     }
-    
+
     return this.redis.incrby(this.prefix + key, value);
   }
 
   /**
    * Decrement a numeric value in the cache
-   * 
+   *
    * Uses Redis DECRBY for atomic operations.
-   * 
+   *
    * @param key - Cache key
    * @param value - Amount to decrement by (default: 1)
    * @returns The new value after decrementing
-   * 
+   *
    * @example
    * ```typescript
    * await store.decrement('stock:product:123');     // -1
@@ -226,19 +226,19 @@ export class RedisStore implements TaggableStore {
     if (value === 1) {
       return this.redis.decr(this.prefix + key);
     }
-    
+
     return this.redis.decrby(this.prefix + key, value);
   }
 
   /**
    * Store an item indefinitely
-   * 
+   *
    * Note: Redis doesn't have true "forever" storage, so we use a very long TTL (10 years).
-   * 
+   *
    * @param key - Cache key
    * @param value - Value to cache
    * @returns True if successful
-   * 
+   *
    * @example
    * ```typescript
    * await store.forever('config:app', { theme: 'dark' });
@@ -248,16 +248,16 @@ export class RedisStore implements TaggableStore {
     const serialized = this.serialize(value);
     // Use 10 years as "forever"
     const result = await this.redis.set(this.prefix + key, serialized, { ex: 315360000 });
-    
+
     return result === 'OK';
   }
 
   /**
    * Remove an item from the cache
-   * 
+   *
    * @param key - Cache key
    * @returns True if the item was removed
-   * 
+   *
    * @example
    * ```typescript
    * await store.forget('user:123');
@@ -270,12 +270,12 @@ export class RedisStore implements TaggableStore {
 
   /**
    * Remove all items from the cache
-   * 
+   *
    * **Warning:** This flushes the entire Redis database, not just prefixed keys.
    * Use with caution in shared Redis instances.
-   * 
+   *
    * @returns True if successful
-   * 
+   *
    * @example
    * ```typescript
    * await store.flush(); // Clears entire Redis database
@@ -288,7 +288,7 @@ export class RedisStore implements TaggableStore {
 
   /**
    * Get the cache key prefix
-   * 
+   *
    * @returns The prefix string
    */
   getPrefix(): string {
@@ -297,12 +297,12 @@ export class RedisStore implements TaggableStore {
 
   /**
    * Begin executing a new tags operation
-   * 
+   *
    * Creates a TaggedCache instance for cache operations scoped to specific tags.
-   * 
+   *
    * @param names - Array of tag names
    * @returns A TaggedCache instance
-   * 
+   *
    * @example
    * ```typescript
    * const taggedCache = store.tags(['users', 'premium']);
@@ -317,9 +317,9 @@ export class RedisStore implements TaggableStore {
 
   /**
    * Serialize a value for storage in Redis
-   * 
+   *
    * Converts JavaScript values to JSON strings.
-   * 
+   *
    * @param value - Value to serialize
    * @returns JSON string
    * @private
@@ -330,9 +330,9 @@ export class RedisStore implements TaggableStore {
 
   /**
    * Deserialize a value from Redis
-   * 
+   *
    * Converts JSON strings back to JavaScript values.
-   * 
+   *
    * @param value - JSON string
    * @returns Deserialized value
    * @private

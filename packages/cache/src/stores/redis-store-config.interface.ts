@@ -1,14 +1,14 @@
 /**
  * Redis Store Configuration Interface
- * 
+ *
  * Configuration options for the Redis cache store.
- * 
+ *
  * @module stores/redis-store-config
  */
 
 /**
  * Redis connection interface
- * 
+ *
  * Minimal interface for Redis operations required by the cache store.
  * This matches the RedisConnection interface from @abdokouta/redis.
  */
@@ -29,9 +29,9 @@ export interface RedisConnection {
 
 /**
  * Redis store configuration
- * 
+ *
  * Defines configuration options specific to the Redis cache store.
- * 
+ *
  * @example
  * ```typescript
  * const redis = await redisManager.connection('cache');
@@ -45,16 +45,16 @@ export interface RedisConnection {
 export interface RedisStoreConfig {
   /**
    * Redis connection instance
-   * 
+   *
    * Must be a connected Redis client from @abdokouta/redis.
    */
   connection: RedisConnection;
 
   /**
    * Cache key prefix
-   * 
+   *
    * Prepended to all cache keys to avoid collisions.
-   * 
+   *
    * @default ''
    * @example 'cache_' results in keys like 'cache_user:123'
    */
@@ -62,9 +62,9 @@ export interface RedisStoreConfig {
 
   /**
    * Default time-to-live in seconds
-   * 
+   *
    * Used when no TTL is specified in cache operations.
-   * 
+   *
    * @default 300 (5 minutes)
    */
   ttl?: number;

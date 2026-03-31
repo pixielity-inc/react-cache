@@ -1,22 +1,22 @@
 /**
  * Base cache store interface
- * 
+ *
  * Defines the contract that all cache stores must implement.
  * Provides basic cache operations like get, put, forget, etc.
- * 
+ *
  * @module types/store
- * 
+ *
  * @example
  * ```typescript
  * class MyCustomStore implements Store {
  *   async get(key: string): Promise<any> {
  *     // Implementation
  *   }
- *   
+ *
  *   async put(key: string, value: any, seconds: number): Promise<boolean> {
  *     // Implementation
  *   }
- *   
+ *
  *   // ... other methods
  * }
  * ```
@@ -25,7 +25,7 @@
 export interface Store {
   /**
    * Retrieve an item from the cache by key
-   * 
+   *
    * @param key - Cache key
    * @returns The cached value, or undefined if not found
    */
@@ -33,7 +33,7 @@ export interface Store {
 
   /**
    * Retrieve multiple items from the cache
-   * 
+   *
    * @param keys - Array of cache keys
    * @returns Object mapping keys to values
    */
@@ -41,7 +41,7 @@ export interface Store {
 
   /**
    * Store an item in the cache
-   * 
+   *
    * @param key - Cache key
    * @param value - Value to cache
    * @param seconds - TTL in seconds
@@ -51,7 +51,7 @@ export interface Store {
 
   /**
    * Store multiple items in the cache
-   * 
+   *
    * @param values - Object mapping keys to values
    * @param seconds - TTL in seconds
    * @returns True if successful
@@ -60,7 +60,7 @@ export interface Store {
 
   /**
    * Increment a numeric value in the cache
-   * 
+   *
    * @param key - Cache key
    * @param value - Amount to increment by (default: 1)
    * @returns The new value, or false on failure
@@ -69,7 +69,7 @@ export interface Store {
 
   /**
    * Decrement a numeric value in the cache
-   * 
+   *
    * @param key - Cache key
    * @param value - Amount to decrement by (default: 1)
    * @returns The new value, or false on failure
@@ -78,7 +78,7 @@ export interface Store {
 
   /**
    * Store an item indefinitely
-   * 
+   *
    * @param key - Cache key
    * @param value - Value to cache
    * @returns True if successful
@@ -87,7 +87,7 @@ export interface Store {
 
   /**
    * Remove an item from the cache
-   * 
+   *
    * @param key - Cache key
    * @returns True if the item was removed
    */
@@ -95,14 +95,14 @@ export interface Store {
 
   /**
    * Remove all items from the cache
-   * 
+   *
    * @returns True if successful
    */
   flush(): Promise<boolean>;
 
   /**
    * Get the cache key prefix
-   * 
+   *
    * @returns The prefix string
    */
   getPrefix(): string;

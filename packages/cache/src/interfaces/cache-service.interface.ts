@@ -75,19 +75,12 @@ export interface CacheServiceInterface {
   /**
    * Get value or execute callback and store result
    */
-  remember<T = any>(
-    key: string,
-    ttl: number,
-    callback: () => T | Promise<T>,
-  ): Promise<T>;
+  remember<T = any>(key: string, ttl: number, callback: () => T | Promise<T>): Promise<T>;
 
   /**
    * Get value or execute callback and store result forever
    */
-  rememberForever<T = any>(
-    key: string,
-    callback: () => T | Promise<T>,
-  ): Promise<T>;
+  rememberForever<T = any>(key: string, callback: () => T | Promise<T>): Promise<T>;
 
   /**
    * Increment a numeric value

@@ -1,12 +1,14 @@
 # @abdokouta/cache
 
-Laravel-inspired caching system for Refine with multiple drivers and cache tagging support.
+Laravel-inspired caching system for Refine with multiple drivers and cache
+tagging support.
 
 ## Features
 
 - **Multiple Drivers**: Memory, Redis (Upstash), and Null stores
 - **Cache Tagging**: Group and invalidate related cache items (Redis only)
-- **Repository Pattern**: Laravel-style high-level API with `remember()`, `rememberForever()`, etc.
+- **Repository Pattern**: Laravel-style high-level API with `remember()`,
+  `rememberForever()`, etc.
 - **React Hooks**: `useCache()` and `useCachedQuery()` for easy integration
 - **TypeScript**: Full type safety with comprehensive JSDoc documentation
 - **Browser Compatible**: Works in browsers using Upstash Redis HTTP API
@@ -24,11 +26,13 @@ pnpm add @abdokouta/cache
 ### Optional Dependencies
 
 For Redis support:
+
 ```bash
 npm install @abdokouta/redis @upstash/redis
 ```
 
 For React hooks:
+
 ```bash
 npm install react
 ```
@@ -70,9 +74,7 @@ import { CacheService } from '@abdokouta/cache';
 
 @Injectable()
 export class UserService {
-  constructor(
-    @Inject(CacheService) private cache: CacheService
-  ) {}
+  constructor(@Inject(CacheService) private cache: CacheService) {}
 
   async getUser(id: string) {
     // Remember pattern: get from cache or execute callback
@@ -99,7 +101,7 @@ function UserProfile({ userId }: { userId: string }) {
   useEffect(() => {
     async function loadUser() {
       const cached = await cache.get(`user:${userId}`);
-      
+
       if (cached) {
         setUser(cached);
       } else {
@@ -108,7 +110,7 @@ function UserProfile({ userId }: { userId: string }) {
         setUser(user);
       }
     }
-    
+
     loadUser();
   }, [userId]);
 
@@ -128,15 +130,16 @@ CacheModule.forRoot({
   stores: {
     memory: {
       driver: 'memory',
-      maxSize: 1000,    // Max items (LRU eviction)
-      ttl: 300,         // Default TTL in seconds
+      maxSize: 1000, // Max items (LRU eviction)
+      ttl: 300, // Default TTL in seconds
       prefix: 'cache_',
     },
   },
-})
+});
 ```
 
 **Use Cases:**
+
 - Development/testing
 - Client-side caching in browsers
 - Temporary session data
@@ -161,7 +164,7 @@ import { RedisModule } from '@abdokouta/redis';
         },
       },
     }),
-    
+
     // Then configure Cache
     CacheModule.forRoot({
       default: 'redis',
@@ -179,6 +182,7 @@ import { RedisModule } from '@abdokouta/redis';
 ```
 
 **Use Cases:**
+
 - Production applications
 - Distributed systems
 - When cache persistence is required
@@ -196,10 +200,11 @@ CacheModule.forRoot({
       driver: 'null',
     },
   },
-})
+});
 ```
 
 **Use Cases:**
+
 - Disabling cache in testing
 - Development environments
 - Feature flags to disable caching
@@ -221,10 +226,13 @@ const valueWithDefault = await cache.get('key', 'default');
 await cache.put('key', 'value', 3600); // TTL in seconds
 
 // Put many
-await cache.putMany({
-  'key1': 'value1',
-  'key2': 'value2',
-}, 3600);
+await cache.putMany(
+  {
+    key1: 'value1',
+    key2: 'value2',
+  },
+  3600
+);
 
 // Forever (no expiration)
 await cache.forever('key', 'value');
@@ -257,9 +265,9 @@ const config = await cache.rememberForever('app:config', async () => {
 #### Increment/Decrement
 
 ```typescript
-await cache.increment('page:views');        // +1
-await cache.increment('page:views', 10);    // +10
-await cache.decrement('stock:item:123');    // -1
+await cache.increment('page:views'); // +1
+await cache.increment('page:views', 10); // +10
+await cache.decrement('stock:item:123'); // -1
 await cache.decrement('stock:item:123', 5); // -5
 ```
 
@@ -314,15 +322,15 @@ import { useCache } from '@abdokouta/cache';
 
 function MyComponent() {
   const cache = useCache();
-  
+
   // Use default store
   const handleCache = async () => {
     await cache.put('key', 'value', 3600);
   };
-  
+
   // Use specific store
   const memoryCache = useCache('memory');
-  
+
   return <button onClick={handleCache}>Cache Data</button>;
 }
 ```
@@ -346,7 +354,7 @@ function UserProfile({ userId }: { userId: string }) {
 
   if (isLoading) return <div>Loading...</div>;
   if (error) return <div>Error: {error.message}</div>;
-  
+
   return (
     <div>
       <h1>{user.name}</h1>
@@ -358,6 +366,7 @@ function UserProfile({ userId }: { userId: string }) {
 ```
 
 **Options:**
+
 - `key`: Cache key
 - `queryFn`: Function to execute on cache miss
 - `ttl`: TTL in seconds (default: 300)
@@ -366,6 +375,7 @@ function UserProfile({ userId }: { userId: string }) {
 - `refetchOnMount`: Refetch on mount (default: false)
 
 **Result:**
+
 - `data`: Query data
 - `isLoading`: Loading state
 - `error`: Error state
@@ -380,10 +390,10 @@ function UserProfile({ userId }: { userId: string }) {
 interface CacheModuleOptions {
   /** Default store name */
   default: string;
-  
+
   /** Store configurations */
   stores: Record<string, StoreConfig>;
-  
+
   /** Global cache key prefix */
   prefix?: string;
 }
@@ -395,17 +405,17 @@ interface CacheModuleOptions {
 // Memory Store
 interface MemoryStoreConfig {
   driver: 'memory';
-  maxSize?: number;  // Max items (LRU eviction)
-  ttl?: number;      // Default TTL in seconds
-  prefix?: string;   // Store-specific prefix
+  maxSize?: number; // Max items (LRU eviction)
+  ttl?: number; // Default TTL in seconds
+  prefix?: string; // Store-specific prefix
 }
 
 // Redis Store
 interface RedisStoreConfig {
   driver: 'redis';
-  connection?: string;  // Redis connection name
-  ttl?: number;         // Default TTL in seconds
-  prefix?: string;      // Store-specific prefix
+  connection?: string; // Redis connection name
+  ttl?: number; // Default TTL in seconds
+  prefix?: string; // Store-specific prefix
 }
 
 // Null Store
@@ -422,9 +432,7 @@ interface NullStoreConfig {
 ```typescript
 @Injectable()
 export class StatsService {
-  constructor(
-    @Inject(CacheService) private cache: CacheService
-  ) {}
+  constructor(@Inject(CacheService) private cache: CacheService) {}
 
   async getStats() {
     // Use memory cache for fast access
@@ -453,7 +461,7 @@ CacheModule.forRoot({
     memory: { driver: 'memory' },
     null: { driver: 'null' },
   },
-})
+});
 ```
 
 ### Cache Invalidation Patterns
@@ -476,11 +484,14 @@ await cache.flush();
 
 ## Best Practices
 
-1. **Use Descriptive Keys**: Use namespaced keys like `user:123`, `post:456:comments`
+1. **Use Descriptive Keys**: Use namespaced keys like `user:123`,
+   `post:456:comments`
 2. **Set Appropriate TTLs**: Balance freshness vs. performance
-3. **Use Tags for Related Data**: Group related items for easy invalidation (Redis)
+3. **Use Tags for Related Data**: Group related items for easy invalidation
+   (Redis)
 4. **Handle Cache Misses**: Always provide fallback logic
-5. **Monitor Cache Size**: Set `maxSize` for memory stores to prevent memory leaks
+5. **Monitor Cache Size**: Set `maxSize` for memory stores to prevent memory
+   leaks
 6. **Use Remember Pattern**: Simplifies cache-or-compute logic
 7. **Invalidate on Updates**: Clear cache when data changes
 
@@ -504,13 +515,13 @@ export class UserService {
 
   async updateUser(id: string, data: Partial<User>) {
     const user = await this.db.users.update(id, data);
-    
+
     // Invalidate cache
     await this.cache.forget(`user:${id}`);
-    
+
     // Or update cache directly
     await this.cache.put(`user:${id}`, user, 3600);
-    
+
     return user;
   }
 }
@@ -521,13 +532,11 @@ export class UserService {
 ```typescript
 @Injectable()
 export class ApiService {
-  constructor(
-    @Inject(CacheService) private cache: CacheService
-  ) {}
+  constructor(@Inject(CacheService) private cache: CacheService) {}
 
   async fetchData(endpoint: string) {
     const cacheKey = `api:${endpoint}`;
-    
+
     return this.cache.remember(cacheKey, 300, async () => {
       const response = await fetch(endpoint);
       return response.json();
@@ -541,25 +550,23 @@ export class ApiService {
 ```typescript
 @Injectable()
 export class RateLimiter {
-  constructor(
-    @Inject(CacheService) private cache: CacheService
-  ) {}
+  constructor(@Inject(CacheService) private cache: CacheService) {}
 
   async checkLimit(userId: string, limit: number = 100): Promise<boolean> {
     const key = `rate:${userId}`;
     const current = await this.cache.get(key, 0);
-    
+
     if (current >= limit) {
       return false; // Rate limit exceeded
     }
-    
+
     await this.cache.increment(key);
-    
+
     // Set expiration on first request
     if (current === 0) {
       await this.cache.put(key, 1, 3600); // 1 hour window
     }
-    
+
     return true;
   }
 }
@@ -570,16 +577,14 @@ export class RateLimiter {
 ```typescript
 @Injectable()
 export class SessionService {
-  constructor(
-    @Inject(CacheService) private cache: CacheService
-  ) {}
+  constructor(@Inject(CacheService) private cache: CacheService) {}
 
   async createSession(userId: string, data: any): Promise<string> {
     const sessionId = generateId();
     const key = `session:${sessionId}`;
-    
+
     await this.cache.put(key, { userId, ...data }, 86400); // 24 hours
-    
+
     return sessionId;
   }
 
@@ -599,7 +604,8 @@ MIT
 
 ## Contributing
 
-Contributions are welcome! Please read our contributing guidelines before submitting PRs.
+Contributions are welcome! Please read our contributing guidelines before
+submitting PRs.
 
 ## Support
 

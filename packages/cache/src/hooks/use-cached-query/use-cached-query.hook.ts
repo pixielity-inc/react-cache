@@ -1,17 +1,17 @@
 /**
  * useCachedQuery Hook
- * 
+ *
  * React hook for caching async query results with automatic cache management.
  * Similar to React Query but using the cache system.
- * 
+ *
  * **Features:**
  * - Automatic caching of query results
  * - Loading and error states
  * - Cache invalidation
  * - Configurable TTL
- * 
+ *
  * **Note:** This requires React and @abdokouta/react-di to be installed.
- * 
+ *
  * @module hooks/use-cached-query
  */
 
@@ -23,12 +23,12 @@ import type { UseCachedQueryOptions } from '@/interfaces/use-cached-query-option
 
 /**
  * Hook for caching async query results
- * 
+ *
  * Automatically caches query results and manages loading/error states.
- * 
+ *
  * @param options - Query options
  * @returns Query result with data, loading, error, and control functions
- * 
+ *
  * @example
  * ```typescript
  * function UserProfile({ userId }: { userId: string }) {
@@ -40,10 +40,10 @@ import type { UseCachedQueryOptions } from '@/interfaces/use-cached-query-option
  *     },
  *     ttl: 3600, // Cache for 1 hour
  *   });
- * 
+ *
  *   if (isLoading) return <div>Loading...</div>;
  *   if (error) return <div>Error: {error.message}</div>;
- *   
+ *
  *   return (
  *     <div>
  *       <h1>{user.name}</h1>
@@ -52,7 +52,7 @@ import type { UseCachedQueryOptions } from '@/interfaces/use-cached-query-option
  *   );
  * }
  * ```
- * 
+ *
  * @example
  * ```typescript
  * // With cache invalidation
@@ -62,16 +62,16 @@ import type { UseCachedQueryOptions } from '@/interfaces/use-cached-query-option
  *     queryFn: fetchUsers,
  *     ttl: 600,
  *   });
- * 
+ *
  *   const handleUserUpdate = async (user) => {
  *     await updateUser(user);
  *     await invalidate(); // Clear cache and refetch
  *   };
- * 
+ *
  *   return <UserTable users={users} onUpdate={handleUserUpdate} />;
  * }
  * ```
- * 
+ *
  * @example
  * ```typescript
  * // Conditional query
@@ -81,7 +81,7 @@ import type { UseCachedQueryOptions } from '@/interfaces/use-cached-query-option
  *     queryFn: fetchData,
  *     enabled: shouldFetch, // Only fetch when enabled
  *   });
- * 
+ *
  *   return <div>{data?.value}</div>;
  * }
  * ```
@@ -89,17 +89,10 @@ import type { UseCachedQueryOptions } from '@/interfaces/use-cached-query-option
 export function useCachedQuery<T = any>(
   options: UseCachedQueryOptions<T>
 ): UseCachedQueryResult<T> {
-  const {
-    key,
-    queryFn,
-    ttl = 300,
-    storeName,
-    enabled = true,
-    refetchOnMount = false,
-  } = options;
+  const { key, queryFn, ttl = 300, storeName, enabled = true, refetchOnMount = false } = options;
 
   const cache = useCache(storeName);
-  
+
   const [data, setData] = useState<T | undefined>(undefined);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<Error | null>(null);
@@ -107,34 +100,37 @@ export function useCachedQuery<T = any>(
   /**
    * Fetch data from cache or execute query
    */
-  const fetchData = useCallback(async (forceRefetch: boolean = false) => {
-    if (!enabled) {
-      setIsLoading(false);
-      return;
-    }
-
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      let result: T;
-
-      if (forceRefetch) {
-        // Force refetch: execute query and update cache
-        result = await queryFn();
-        await cache.put(key, result, ttl);
-      } else {
-        // Try cache first, then query
-        result = await cache.remember(key, ttl, queryFn);
+  const fetchData = useCallback(
+    async (forceRefetch: boolean = false) => {
+      if (!enabled) {
+        setIsLoading(false);
+        return;
       }
 
-      setData(result);
-    } catch (err) {
-      setError(err instanceof Error ? err : new Error(String(err)));
-    } finally {
-      setIsLoading(false);
-    }
-  }, [key, queryFn, ttl, enabled, cache]);
+      setIsLoading(true);
+      setError(null);
+
+      try {
+        let result: T;
+
+        if (forceRefetch) {
+          // Force refetch: execute query and update cache
+          result = await queryFn();
+          await cache.put(key, result, ttl);
+        } else {
+          // Try cache first, then query
+          result = await cache.remember(key, ttl, queryFn);
+        }
+
+        setData(result);
+      } catch (err) {
+        setError(err instanceof Error ? err : new Error(String(err)));
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [key, queryFn, ttl, enabled, cache]
+  );
 
   /**
    * Refetch data (uses cache if available)

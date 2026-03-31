@@ -1,8 +1,8 @@
 /**
  * Cache Interfaces
- * 
+ *
  * All interface definitions for the cache package.
- * 
+ *
  * @module interfaces
  */
 

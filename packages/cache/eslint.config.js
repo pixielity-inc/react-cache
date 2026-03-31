@@ -1,13 +1,18 @@
-import nesvelConfig from '@nesvel/eslint-config';
+import js from '@eslint/js';
+import tseslint from 'typescript-eslint';
 
-export default [
-  ...nesvelConfig,
+export default tseslint.config(
+  js.configs.recommended,
+  ...tseslint.configs.recommended,
   {
-    ignores: ['dist/**', 'node_modules/**', '*.config.js', '*.config.ts'],
+    ignores: ['dist/**', 'node_modules/**', 'coverage/**'],
   },
   {
     rules: {
-      // Add any package-specific rule overrides here
+      '@typescript-eslint/no-explicit-any': 'off',
+      '@typescript-eslint/no-unused-vars': 'off',
+      '@typescript-eslint/no-empty-object-type': 'off',
+      '@typescript-eslint/no-empty-interface': 'off',
     },
-  },
-];
+  }
+);

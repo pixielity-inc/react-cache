@@ -1,9 +1,9 @@
 /**
  * Cache Module
- * 
+ *
  * Configures the cache system for dependency injection.
  * Provides CacheService (NO manager) to the application.
- * 
+ *
  * @module cache.module
  */
 
@@ -15,16 +15,16 @@ import { CACHE_CONFIG, CACHE_SERVICE } from '@/constants/tokens.constant';
 
 /**
  * Cache module
- * 
+ *
  * Provides CacheService to the application via dependency injection.
  * The service handles stores internally (NO separate manager).
- * 
+ *
  * @example
  * ```typescript
  * import { Module } from '@abdokouta/react-di';
  * import { CacheModule } from '@abdokouta/cache';
  * import { RedisModule } from '@abdokouta/redis';
- * 
+ *
  * @Module({
  *   imports: [
  *     // Configure Redis (optional, only if using Redis store)
@@ -37,7 +37,7 @@ import { CACHE_CONFIG, CACHE_SERVICE } from '@/constants/tokens.constant';
  *         },
  *       },
  *     }),
- *     
+ *
  *     // Configure Cache
  *     CacheModule.forRoot({
  *       default: 'memory',
@@ -68,10 +68,10 @@ import { CACHE_CONFIG, CACHE_SERVICE } from '@/constants/tokens.constant';
 export class CacheModule {
   /**
    * Configure the cache module
-   * 
+   *
    * @param config - Cache configuration
    * @returns Dynamic module
-   * 
+   *
    * @example
    * ```typescript
    * CacheModule.forRoot({

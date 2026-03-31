@@ -19,7 +19,7 @@
  * @module stores/memory
  */
 
-import type { Store, MemoryStoreConfig } from "@/interfaces";
+import type { Store, MemoryStoreConfig } from '@/interfaces';
 
 /**
  * Cache entry structure
@@ -85,9 +85,9 @@ export class MemoryStore implements Store {
    *
    * @param config - Store configuration
    */
-  constructor(config: Omit<MemoryStoreConfig, "driver"> = {}) {
+  constructor(config: Omit<MemoryStoreConfig, 'driver'> = {}) {
     this.maxSize = config.maxSize;
-    this.prefix = config.prefix ?? "";
+    this.prefix = config.prefix ?? '';
   }
 
   /**
@@ -144,11 +144,7 @@ export class MemoryStore implements Store {
     const prefixedKey = this.prefix + key;
 
     // Evict oldest entry if cache is full and this is a new key
-    if (
-      this.maxSize &&
-      this.cache.size >= this.maxSize &&
-      !this.cache.has(prefixedKey)
-    ) {
+    if (this.maxSize && this.cache.size >= this.maxSize && !this.cache.has(prefixedKey)) {
       this.evictOldest();
     }
 
@@ -169,10 +165,7 @@ export class MemoryStore implements Store {
    * @param seconds - TTL in seconds
    * @returns Always true
    */
-  async putMany(
-    values: Record<string, any>,
-    seconds: number,
-  ): Promise<boolean> {
+  async putMany(values: Record<string, any>, seconds: number): Promise<boolean> {
     for (const [key, value] of Object.entries(values)) {
       await this.put(key, value, seconds);
     }

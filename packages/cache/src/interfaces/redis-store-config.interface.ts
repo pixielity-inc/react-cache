@@ -1,11 +1,11 @@
 /**
  * Redis store configuration
- * 
+ *
  * Configuration specific to the Redis-backed cache store.
  * Requires @abdokouta/redis package to be installed.
- * 
+ *
  * @module interfaces/redis-store-config
- * 
+ *
  * @example
  * ```typescript
  * const redis = await redisManager.connection('cache');
@@ -25,16 +25,16 @@ export interface RedisStoreConfig {
 
   /**
    * Redis connection instance
-   * 
+   *
    * Must be a connected Redis client from @abdokouta/redis.
    */
   connection: RedisConnection;
 
   /**
    * Store-specific key prefix
-   * 
+   *
    * Optional prefix for this store only (in addition to global prefix).
-   * 
+   *
    * @default ''
    * @example 'cache_' results in keys like 'myapp_cache_user:123'
    */
@@ -42,9 +42,9 @@ export interface RedisStoreConfig {
 
   /**
    * Default time-to-live in seconds
-   * 
+   *
    * Used when no TTL is specified in cache operations.
-   * 
+   *
    * @default 300 (5 minutes)
    */
   ttl?: number;

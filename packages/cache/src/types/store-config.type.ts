@@ -1,8 +1,8 @@
 /**
  * Union type of all store configurations
- * 
+ *
  * Used for type-safe store configuration.
- * 
+ *
  * @module types/store-config
  */
 
