@@ -1,4 +1,4 @@
-# @pixielity/cache
+# @abdokouta/cache
 
 Laravel-inspired caching system for Refine with multiple drivers and cache tagging support.
 
@@ -14,18 +14,18 @@ Laravel-inspired caching system for Refine with multiple drivers and cache taggi
 ## Installation
 
 ```bash
-npm install @pixielity/cache
+npm install @abdokouta/cache
 # or
-yarn add @pixielity/cache
+yarn add @abdokouta/cache
 # or
-pnpm add @pixielity/cache
+pnpm add @abdokouta/cache
 ```
 
 ### Optional Dependencies
 
 For Redis support:
 ```bash
-npm install @pixielity/redis @upstash/redis
+npm install @abdokouta/redis @upstash/redis
 ```
 
 For React hooks:
@@ -38,8 +38,8 @@ npm install react
 ### 1. Configure the Module
 
 ```typescript
-import { Module } from '@pixielity/container';
-import { CacheModule } from '@pixielity/cache';
+import { Module } from '@abdokouta/container';
+import { CacheModule } from '@abdokouta/cache';
 
 @Module({
   imports: [
@@ -65,8 +65,8 @@ export class AppModule {}
 ### 2. Use in Services
 
 ```typescript
-import { Injectable, Inject } from '@pixielity/container';
-import { CacheService } from '@pixielity/cache';
+import { Injectable, Inject } from '@abdokouta/container';
+import { CacheService } from '@abdokouta/cache';
 
 @Injectable()
 export class UserService {
@@ -90,7 +90,7 @@ export class UserService {
 ### 3. Use in React Components
 
 ```typescript
-import { useCache } from '@pixielity/cache';
+import { useCache } from '@abdokouta/cache';
 
 function UserProfile({ userId }: { userId: string }) {
   const cache = useCache();
@@ -144,10 +144,10 @@ CacheModule.forRoot({
 
 ### Redis Store
 
-Redis-backed cache with tagging support (requires @pixielity/redis).
+Redis-backed cache with tagging support (requires @abdokouta/redis).
 
 ```typescript
-import { RedisModule } from '@pixielity/redis';
+import { RedisModule } from '@abdokouta/redis';
 
 @Module({
   imports: [
@@ -310,7 +310,7 @@ await taggedCache.flush(); // Flush all user posts
 Access cache service in React components:
 
 ```typescript
-import { useCache } from '@pixielity/cache';
+import { useCache } from '@abdokouta/cache';
 
 function MyComponent() {
   const cache = useCache();
@@ -332,7 +332,7 @@ function MyComponent() {
 Automatic caching of async query results:
 
 ```typescript
-import { useCachedQuery } from '@pixielity/cache';
+import { useCachedQuery } from '@abdokouta/cache';
 
 function UserProfile({ userId }: { userId: string }) {
   const { data: user, isLoading, error, refetch, invalidate } = useCachedQuery({

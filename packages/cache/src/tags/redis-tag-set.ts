@@ -23,7 +23,7 @@ import type { TagSet as ITagSet } from '@/interfaces';
 /**
  * Redis connection interface (minimal subset needed)
  * 
- * This avoids a hard dependency on @pixielity/redis in the type system.
+ * This avoids a hard dependency on @abdokouta/redis in the type system.
  */
 interface RedisConnection {
   get(key: string): Promise<string | null>;

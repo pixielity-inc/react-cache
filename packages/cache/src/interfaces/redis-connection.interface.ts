@@ -2,7 +2,7 @@
  * Redis connection interface
  * 
  * Minimal interface for Redis operations required by the cache store.
- * This matches the RedisConnection interface from @pixielity/redis.
+ * This matches the RedisConnection interface from @abdokouta/redis.
  * 
  * @module types/redis-connection
  */

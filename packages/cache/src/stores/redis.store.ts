@@ -2,7 +2,7 @@
  * Redis Cache Store
  * 
  * Redis-backed cache implementation with support for tagging.
- * Uses @pixielity/redis (Upstash) for browser-compatible Redis access.
+ * Uses @abdokouta/redis (Upstash) for browser-compatible Redis access.
  * 
  * **Features:**
  * - Persistent caching across application restarts

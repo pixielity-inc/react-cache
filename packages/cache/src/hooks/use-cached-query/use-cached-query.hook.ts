@@ -10,7 +10,7 @@
  * - Cache invalidation
  * - Configurable TTL
  * 
- * **Note:** This requires React and @pixielity/container to be installed.
+ * **Note:** This requires React and @abdokouta/react-di to be installed.
  * 
  * @module hooks/use-cached-query
  */

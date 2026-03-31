@@ -8,13 +8,13 @@
  * 
  * @example
  * ```typescript
- * import cacheConfig from '@pixielity/cache/config';
+ * import cacheConfig from '@abdokouta/cache/config';
  * 
  * CacheModule.forRoot(cacheConfig);
  * ```
  */
 
-import type { CacheModuleOptions } from '@pixielity/cache';
+import type { CacheModuleOptions } from '@abdokouta/cache';
 
 /**
  * Cache configuration

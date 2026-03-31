@@ -1,17 +1,17 @@
-# @pixielity/cache
+# @abdokouta/cache
 
 ## 1.0.0
 
 ### Major Features
 
-- 🎉 Initial release of @pixielity/cache
+- 🎉 Initial release of @abdokouta/cache
 - 🚀 Multiple cache drivers: Memory, Redis (Upstash), Null
 - 🏷️ Cache tagging support for Redis
 - 📦 Laravel-inspired Repository pattern
 - ⚡ Browser-compatible Redis via Upstash HTTP API
 - 🎣 React hooks: `useCache` and `useCachedQuery`
 - 🔄 Remember pattern for get-or-set caching
-- 💉 Dependency injection with @pixielity/container
+- 💉 Dependency injection with @abdokouta/container
 
 ### Stores
 

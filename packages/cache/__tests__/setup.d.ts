@@ -4,7 +4,7 @@
  * This file extends Vitest's type definitions to include custom matchers
  * and global test utilities.
  * 
- * @module @pixielity/cache
+ * @module @abdokouta/cache
  * @category Configuration
  */
 

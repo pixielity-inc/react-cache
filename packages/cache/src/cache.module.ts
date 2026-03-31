@@ -7,7 +7,7 @@
  * @module cache.module
  */
 
-import { Module, forRoot, type DynamicModule } from '@pixielity/container';
+import { Module, forRoot, type DynamicModule } from '@abdokouta/react-di';
 
 import type { CacheModuleOptions } from '@/interfaces';
 import { CacheService } from '@/services/cache.service';
@@ -21,9 +21,9 @@ import { CACHE_CONFIG, CACHE_SERVICE } from '@/constants/tokens.constant';
  * 
  * @example
  * ```typescript
- * import { Module } from '@pixielity/container';
- * import { CacheModule } from '@pixielity/cache';
- * import { RedisModule } from '@pixielity/redis';
+ * import { Module } from '@abdokouta/react-di';
+ * import { CacheModule } from '@abdokouta/cache';
+ * import { RedisModule } from '@abdokouta/redis';
  * 
  * @Module({
  *   imports: [

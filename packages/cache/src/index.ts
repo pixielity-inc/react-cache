@@ -1,5 +1,5 @@
 /**
- * @pixielity/cache
+ * @abdokouta/cache
  *
  * Laravel-inspired caching system for Refine with multiple drivers and stores.
  * Provides a clean, unified interface for caching with support for memory,
@@ -8,8 +8,8 @@
  * @example
  * Basic usage with memory store:
  * ```typescript
- * import { CacheModule, CacheService } from '@pixielity/cache';
- * import { Module, Injectable, Inject } from '@pixielity/container';
+ * import { CacheModule, CacheService } from '@abdokouta/cache';
+ * import { Module, Injectable, Inject } from '@abdokouta/react-di';
  *
  * @Module({
  *   imports: [
@@ -51,7 +51,7 @@
  * @example
  * React hook usage:
  * ```typescript
- * import { useCache, useCachedQuery } from '@pixielity/cache';
+ * import { useCache, useCachedQuery } from '@abdokouta/cache';
  *
  * function UserProfile({ userId }: { userId: string }) {
  *   const cache = useCache();
@@ -66,7 +66,7 @@
  * }
  * ```
  *
- * @module @pixielity/cache
+ * @module @abdokouta/cache
  */
 
 // ============================================================================

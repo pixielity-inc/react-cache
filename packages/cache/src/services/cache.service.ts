@@ -44,7 +44,7 @@ import type { StoreConfig } from '@/types';
 import { NullStore } from '@/stores/null.store';
 import { RedisStore } from '@/stores/redis.store';
 import { MemoryStore } from '@/stores/memory.store';
-import { Injectable, Inject } from '@pixielity/container';
+import { Injectable, Inject } from '@abdokouta/react-di';
 import { CACHE_CONFIG } from '@/constants/tokens.constant';
 import type { TaggedCache, Store, TaggableStore, CacheModuleOptions } from '@/interfaces';
 import type { CacheServiceInterface } from '@/interfaces/cache-service.interface';

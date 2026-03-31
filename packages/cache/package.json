@@ -30,7 +30,7 @@
     "format": "prettier --write \"src/**/*.{ts,tsx,js,jsx,json}\""
   },
   "dependencies": {
-    "@abdokouta/react-di": "^2.1.0"
+    "@abdokouta/react-di": "^2.0.0"
   },
   "peerDependencies": {
     "@abdokouta/react-redis": "^1.0.0",

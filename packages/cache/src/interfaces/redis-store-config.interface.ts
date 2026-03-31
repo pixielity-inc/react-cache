@@ -2,7 +2,7 @@
  * Redis store configuration
  * 
  * Configuration specific to the Redis-backed cache store.
- * Requires @pixielity/redis package to be installed.
+ * Requires @abdokouta/redis package to be installed.
  * 
  * @module interfaces/redis-store-config
  * 
@@ -26,7 +26,7 @@ export interface RedisStoreConfig {
   /**
    * Redis connection instance
    * 
-   * Must be a connected Redis client from @pixielity/redis.
+   * Must be a connected Redis client from @abdokouta/redis.
    */
   connection: RedisConnection;
 

@@ -4,12 +4,12 @@
  * React hook for accessing the cache system in components.
  * Provides a convenient way to interact with cache from React components.
  * 
- * **Note:** This requires React and @pixielity/container to be installed.
+ * **Note:** This requires React and @abdokouta/react-di to be installed.
  * 
  * @module hooks/use-cache
  */
 
-import { useInject } from '@pixielity/container';
+import { useInject } from '@abdokouta/react-di';
 
 import { CacheService } from '@/services/cache.service';
 

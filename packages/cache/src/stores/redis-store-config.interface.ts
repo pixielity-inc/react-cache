@@ -10,7 +10,7 @@
  * Redis connection interface
  * 
  * Minimal interface for Redis operations required by the cache store.
- * This matches the RedisConnection interface from @pixielity/redis.
+ * This matches the RedisConnection interface from @abdokouta/redis.
  */
 export interface RedisConnection {
   get(key: string): Promise<string | null>;
@@ -46,7 +46,7 @@ export interface RedisStoreConfig {
   /**
    * Redis connection instance
    * 
-   * Must be a connected Redis client from @pixielity/redis.
+   * Must be a connected Redis client from @abdokouta/redis.
    */
   connection: RedisConnection;
 
