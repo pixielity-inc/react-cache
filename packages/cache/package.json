@@ -1,6 +1,6 @@
 {
   "name": "@abdokouta/react-cache",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Laravel-inspired caching system with multiple drivers (Memory, Redis, Null) for React",
   "license": "MIT",
   "author": {
