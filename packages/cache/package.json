@@ -1,0 +1,63 @@
+{
+  "name": "@abdokouta/react-cache",
+  "version": "1.0.0",
+  "description": "Laravel-inspired caching system with multiple drivers (Memory, Redis, Null) for React",
+  "keywords": [
+    "react",
+    "cache",
+    "redis",
+    "laravel",
+    "tagging",
+    "memory-cache",
+    "upstash"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/pixielity-inc/react-cache.git"
+  },
+  "license": "MIT",
+  "author": "Pixielity",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "test": "vitest --run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest --run --coverage",
+    "test:ui": "vitest --ui",
+    "format": "prettier --write \"src/**/*.{ts,tsx,js,jsx,json}\""
+  },
+  "dependencies": {
+    "@abdokouta/react-di": "workspace:*"
+  },
+  "peerDependencies": {
+    "@abdokouta/react-redis": "workspace:*",
+    "react": "^18.0.0"
+  },
+  "peerDependenciesMeta": {
+    "@abdokouta/react-redis": {
+      "optional": true
+    },
+    "react": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@nesvel/eslint-config": "^1.0.5",
+    "@nesvel/prettier-config": "^1.0.3",
+    "@nesvel/tsup-config": "^1.0.3",
+    "@nesvel/typescript-config": "^1.0.4",
+    "@types/react": "^19.2.14",
+    "@vitest/ui": "^4.1.2",
+    "prettier": "^3.8.1",
+    "tsup": "^8.5.1",
+    "typescript": "^6.0.2",
+    "vitest": "^4.1.2"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "prettier": "@nesvel/prettier-config"
+}

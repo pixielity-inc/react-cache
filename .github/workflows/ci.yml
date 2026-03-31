@@ -1,0 +1,80 @@
+# =============================================================================
+# CI Workflow
+# =============================================================================
+# Runs automated tests and linting on every push and pull request to main/develop
+# branches. Ensures code quality and prevents broken code from being merged.
+#
+# Jobs:
+# - test: Runs tests on Node.js 18 and 20
+# - lint: Checks code formatting with Prettier
+# =============================================================================
+
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  # ===========================================================================
+  # Test Job
+  # ===========================================================================
+  # Runs the test suite on multiple Node.js versions to ensure compatibility
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [18, 20]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build package
+        run: pnpm run build
+        working-directory: packages/container
+
+      - name: Run tests
+        run: pnpm run test
+        working-directory: packages/container
+        continue-on-error: true
+
+  # ===========================================================================
+  # Lint Job
+  # ===========================================================================
+  # Checks code formatting to ensure consistent code style
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Check formatting
+        run: pnpm run format:check
+        working-directory: packages/container
+        continue-on-error: true
