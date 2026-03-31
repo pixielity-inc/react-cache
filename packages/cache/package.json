@@ -2,6 +2,21 @@
   "name": "@abdokouta/react-cache",
   "version": "1.0.1",
   "description": "Laravel-inspired caching system with multiple drivers (Memory, Redis, Null) for React",
+  "license": "MIT",
+  "author": {
+    "name": "Abdelrhman Kouta",
+    "email": "abdelrhman@pixielity.com",
+    "url": "https://github.com/abdokouta"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/abdokouta/cache.git",
+    "directory": "packages/cache"
+  },
+  "bugs": {
+    "url": "https://github.com/abdokouta/cache/issues"
+  },
+  "homepage": "https://github.com/abdokouta/cache#readme",
   "keywords": [
     "react",
     "cache",
@@ -9,32 +24,48 @@
     "laravel",
     "tagging",
     "memory-cache",
-    "upstash"
+    "upstash",
+    "dependency-injection",
+    "di"
   ],
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/pixielity-inc/react-cache.git"
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    }
   },
-  "license": "MIT",
-  "author": "Pixielity",
-  "main": "dist/index.js",
-  "module": "dist/index.mjs",
-  "types": "dist/index.d.ts",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist",
+    "config",
+    "README.md",
+    "LICENSE"
+  ],
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch",
-    "test": "vitest --run",
+    "clean": "rm -rf dist node_modules/.cache",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint . --max-warnings 0",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "test": "vitest run",
     "test:watch": "vitest",
-    "test:coverage": "vitest --run --coverage",
-    "test:ui": "vitest --ui",
-    "format": "prettier --write \"src/**/*.{ts,tsx,js,jsx,json}\""
+    "test:coverage": "vitest run --coverage",
+    "prepublishOnly": "pnpm run build",
+    "release": "pnpm publish --access public --no-git-checks"
   },
   "dependencies": {
     "@abdokouta/react-di": "^2.0.0"
   },
   "peerDependencies": {
     "@abdokouta/react-redis": "^1.0.0",
-    "react": "^18.0.0"
+    "react": "^18.0.0 || ^19.0.0"
   },
   "peerDependenciesMeta": {
     "@abdokouta/react-redis": {
@@ -57,7 +88,12 @@
     "vitest": "^4.1.2"
   },
   "publishConfig": {
-    "access": "public"
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
   },
-  "prettier": "@nesvel/prettier-config"
+  "engines": {
+    "node": ">=18.0.0",
+    "pnpm": ">=9.0.0"
+  },
+  "sideEffects": false
 }
