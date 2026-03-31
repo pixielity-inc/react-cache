@@ -1,27 +1,27 @@
 /**
  * Cache Configuration
- * 
+ *
  * Unified cache configuration following Laravel and NestJS patterns.
  * All cache stores and settings are defined in a single config object.
- * 
+ *
  * @module config/cache
- * 
+ *
  * @example
  * ```typescript
  * import cacheConfig from '@abdokouta/cache/config';
- * 
+ *
  * CacheModule.forRoot(cacheConfig);
  * ```
  */
 
-import type { CacheModuleOptions } from '@abdokouta/cache';
+import { defineConfig } from '@abdokouta/cache';
 
 /**
  * Cache configuration
- * 
+ *
  * Single unified configuration object that automatically adapts to your environment.
  * Uses environment variables for configuration, similar to Laravel's config/cache.php
- * 
+ *
  * Environment Variables:
  * - CACHE_DRIVER: Default cache driver (default: 'memory')
  * - CACHE_PREFIX: Global cache key prefix (default: 'app_')
@@ -33,7 +33,7 @@ import type { CacheModuleOptions } from '@abdokouta/cache';
  * - REDIS_SESSION_CONNECTION: Session Redis connection (default: 'session')
  * - CACHE_SESSION_TTL: Session TTL in seconds (default: 86400)
  */
-const cacheConfig: CacheModuleOptions = {
+const cacheConfig = defineConfig({
   /*
   |--------------------------------------------------------------------------
   | Default Cache Store
@@ -59,7 +59,7 @@ const cacheConfig: CacheModuleOptions = {
   stores: {
     /**
      * Memory Store
-     * 
+     *
      * Fast in-memory cache for development and frequently accessed data.
      * Data is lost when the application restarts.
      */
@@ -72,7 +72,7 @@ const cacheConfig: CacheModuleOptions = {
 
     /**
      * Redis Store
-     * 
+     *
      * Persistent cache using Redis for production environments.
      * Supports distributed caching across multiple servers.
      */
@@ -85,7 +85,7 @@ const cacheConfig: CacheModuleOptions = {
 
     /**
      * Session Store
-     * 
+     *
      * Dedicated cache store for session data with longer TTL.
      */
     session: {
@@ -97,7 +97,7 @@ const cacheConfig: CacheModuleOptions = {
 
     /**
      * Null Store
-     * 
+     *
      * Disables caching. Useful for testing or debugging.
      */
     null: {
@@ -116,6 +116,6 @@ const cacheConfig: CacheModuleOptions = {
   |
   */
   prefix: process.env.CACHE_PREFIX || 'app_',
-};
+});
 
 export default cacheConfig;

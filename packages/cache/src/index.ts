@@ -43,7 +43,7 @@
  * ```typescript
  * // Tag cache entries for easy invalidation
  * await cache.tags(['users', 'posts']).put('user:1:posts', data, 3600);
- * 
+ *
  * // Flush all entries with specific tags
  * await cache.tags(['users']).flush();
  * ```
@@ -55,7 +55,7 @@
  *
  * function UserProfile({ userId }: { userId: string }) {
  *   const cache = useCache();
- *   
+ *
  *   const { data, isLoading } = useCachedQuery(
  *     `user:${userId}`,
  *     () => fetchUser(userId),
@@ -121,3 +121,8 @@ export type {
   UseCachedQueryResult,
   CacheServiceInterface,
 } from './interfaces';
+
+// ============================================================================
+// Utils
+// ============================================================================
+export { defineConfig } from './utils';
