@@ -1,13 +1,6 @@
 # =============================================================================
 # CI Workflow
 # =============================================================================
-# Runs automated tests and linting on every push and pull request to main/develop
-# branches. Ensures code quality and prevents broken code from being merged.
-#
-# Jobs:
-# - test: Runs tests on Node.js 18 and 20
-# - lint: Checks code formatting with Prettier
-# =============================================================================
 
 name: CI
 
@@ -18,15 +11,11 @@ on:
     branches: [main, develop]
 
 jobs:
-  # ===========================================================================
-  # Test Job
-  # ===========================================================================
-  # Runs the test suite on multiple Node.js versions to ensure compatibility
   test:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node-version: [18, 20]
+        node-version: [20, 22]
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -41,7 +30,7 @@ jobs:
           cache: 'pnpm'
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: pnpm install --no-frozen-lockfile
 
       - name: Build package
         run: pnpm run build
@@ -50,12 +39,7 @@ jobs:
       - name: Run tests
         run: pnpm run test
         working-directory: packages/cache
-        continue-on-error: true
 
-  # ===========================================================================
-  # Lint Job
-  # ===========================================================================
-  # Checks code formatting to ensure consistent code style
   lint:
     runs-on: ubuntu-latest
     steps:
@@ -72,9 +56,12 @@ jobs:
           cache: 'pnpm'
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: pnpm install --no-frozen-lockfile
 
       - name: Check formatting
         run: pnpm run format:check
         working-directory: packages/cache
-        continue-on-error: true
+
+      - name: Run linter
+        run: pnpm run lint
+        working-directory: packages/cache
