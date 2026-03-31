@@ -36,6 +36,16 @@ export default defineConfig({
     // Only include __tests__ directory
     include: ['__tests__/**/*.{test,spec}.{ts,tsx}'],
 
+    // Don't fail if no test files found
+    passWithNoTests: true,
+
+    // Fix ESM/CJS compatibility for inversiland
+    server: {
+      deps: {
+        inline: ['inversiland', '@inversiland/inversify'],
+      },
+    },
+
     // Coverage configuration
     coverage: {
       // Use v8 coverage provider (faster than istanbul)
