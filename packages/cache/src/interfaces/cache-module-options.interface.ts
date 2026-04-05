@@ -73,4 +73,15 @@ export interface CacheModuleOptions {
    * @example 'myapp_' results in keys like 'myapp_user:123'
    */
   prefix?: string;
+
+  /**
+   * Whether to register providers globally.
+   *
+   * When true, cache providers are available to all modules without
+   * explicit imports. When false, only modules that import CacheModule
+   * can access the cache.
+   *
+   * @default true
+   */
+  isGlobal?: boolean;
 }

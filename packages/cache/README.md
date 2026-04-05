@@ -53,9 +53,12 @@
 ## Features
 
 - **Multiple Drivers** — Memory, Redis, and Null stores out of the box
-- **Laravel-Inspired API** — `remember`, `rememberForever`, `pull`, `tags`, and more
-- **Cache Tagging** — Group related cache entries and flush them together (Redis)
-- **React Hooks** — `useCache()` and `useCachedQuery()` for component-level caching
+- **Laravel-Inspired API** — `remember`, `rememberForever`, `pull`, `tags`, and
+  more
+- **Cache Tagging** — Group related cache entries and flush them together
+  (Redis)
+- **React Hooks** — `useCache()` and `useCachedQuery()` for component-level
+  caching
 - **Dependency Injection** — First-class DI support via `@abdokouta/react-di`
 - **Type-Safe Configuration** — `defineConfig()` helper with full autocomplete
 - **TTL Support** — Per-operation and per-store default TTL
@@ -138,7 +141,8 @@ function UserProfile({ userId }: { userId: string }) {
 
 ### Basic Configuration
 
-The configuration object follows the same structure as Laravel's `config/cache.php`:
+The configuration object follows the same structure as Laravel's
+`config/cache.php`:
 
 ```typescript
 import { CacheModule } from '@abdokouta/react-cache';
@@ -152,14 +156,14 @@ CacheModule.forRoot({
     memory: {
       driver: 'memory',
       maxSize: 1000,
-      ttl: 300,        // 5 minutes
+      ttl: 300, // 5 minutes
       prefix: 'mem_',
     },
     redis: {
       driver: 'redis',
       connection: redisClient,
       prefix: 'cache_',
-      ttl: 3600,       // 1 hour
+      ttl: 3600, // 1 hour
     },
     null: {
       driver: 'null',
@@ -173,7 +177,8 @@ CacheModule.forRoot({
 
 ### Using defineConfig
 
-For type-safe configuration with IDE autocomplete, use the `defineConfig` helper:
+For type-safe configuration with IDE autocomplete, use the `defineConfig`
+helper:
 
 ```typescript
 // cache.config.ts
@@ -202,15 +207,15 @@ export default defineConfig({
 
 The included `config/cache.config.ts` supports Vite environment variables:
 
-| Variable | Description | Default |
-|---|---|---|
-| `VITE_CACHE_DRIVER` | Default cache driver | `'memory'` |
-| `CACHE_PREFIX` | Global key prefix | `'app_'` |
-| `VITE_CACHE_MEMORY_MAX_SIZE` | Memory store max entries | `1000` |
-| `VITE_CACHE_MEMORY_TTL` | Memory store TTL (seconds) | `300` |
-| `VITE_REDIS_CACHE_CONNECTION` | Redis connection name | `'cache'` |
-| `VITE_CACHE_REDIS_PREFIX` | Redis key prefix | `'cache_'` |
-| `VITE_CACHE_REDIS_TTL` | Redis TTL (seconds) | `3600` |
+| Variable                      | Description                | Default    |
+| ----------------------------- | -------------------------- | ---------- |
+| `VITE_CACHE_DRIVER`           | Default cache driver       | `'memory'` |
+| `CACHE_PREFIX`                | Global key prefix          | `'app_'`   |
+| `VITE_CACHE_MEMORY_MAX_SIZE`  | Memory store max entries   | `1000`     |
+| `VITE_CACHE_MEMORY_TTL`       | Memory store TTL (seconds) | `300`      |
+| `VITE_REDIS_CACHE_CONNECTION` | Redis connection name      | `'cache'`  |
+| `VITE_CACHE_REDIS_PREFIX`     | Redis key prefix           | `'cache_'` |
+| `VITE_CACHE_REDIS_TTL`        | Redis TTL (seconds)        | `3600`     |
 
 ---
 
@@ -218,7 +223,8 @@ The included `config/cache.config.ts` supports Vite environment variables:
 
 ### Memory Store
 
-Fast in-memory cache using JavaScript `Map`. Data is lost on page refresh or process restart.
+Fast in-memory cache using JavaScript `Map`. Data is lost on page refresh or
+process restart.
 
 ```typescript
 {
@@ -229,18 +235,19 @@ Fast in-memory cache using JavaScript `Map`. Data is lost on page refresh or pro
 }
 ```
 
-| Option | Type | Default | Description |
-|---|---|---|---|
-| `driver` | `'memory'` | — | Required driver identifier |
-| `maxSize` | `number` | `undefined` | Max entries (unlimited if omitted) |
-| `ttl` | `number` | `300` | Default TTL in seconds |
-| `prefix` | `string` | `''` | Key prefix |
+| Option    | Type       | Default     | Description                        |
+| --------- | ---------- | ----------- | ---------------------------------- |
+| `driver`  | `'memory'` | —           | Required driver identifier         |
+| `maxSize` | `number`   | `undefined` | Max entries (unlimited if omitted) |
+| `ttl`     | `number`   | `300`       | Default TTL in seconds             |
+| `prefix`  | `string`   | `''`        | Key prefix                         |
 
 Best for: development, client-side caching, temporary data.
 
 ### Redis Store
 
-Persistent cache backed by Redis. Supports tagging, distributed caching, and atomic operations.
+Persistent cache backed by Redis. Supports tagging, distributed caching, and
+atomic operations.
 
 ```typescript
 {
@@ -251,18 +258,20 @@ Persistent cache backed by Redis. Supports tagging, distributed caching, and ato
 }
 ```
 
-| Option | Type | Default | Description |
-|---|---|---|---|
-| `driver` | `'redis'` | — | Required driver identifier |
-| `connection` | `RedisConnection` | — | Redis client instance |
-| `ttl` | `number` | `300` | Default TTL in seconds |
-| `prefix` | `string` | `''` | Key prefix |
+| Option       | Type              | Default | Description                |
+| ------------ | ----------------- | ------- | -------------------------- |
+| `driver`     | `'redis'`         | —       | Required driver identifier |
+| `connection` | `RedisConnection` | —       | Redis client instance      |
+| `ttl`        | `number`          | `300`   | Default TTL in seconds     |
+| `prefix`     | `string`          | `''`    | Key prefix                 |
 
-Best for: production, distributed systems, when persistence or tagging is needed.
+Best for: production, distributed systems, when persistence or tagging is
+needed.
 
 ### Null Store
 
-No-op store that never caches anything. All writes succeed, all reads return `undefined`.
+No-op store that never caches anything. All writes succeed, all reads return
+`undefined`.
 
 ```typescript
 {
@@ -319,7 +328,8 @@ await cache.flush();
 
 ### Remember Pattern
 
-The `remember` method retrieves from cache or executes a callback and stores the result — the most common caching pattern:
+The `remember` method retrieves from cache or executes a callback and stores the
+result — the most common caching pattern:
 
 ```typescript
 // Cache for 1 hour, fetch from DB on miss
@@ -359,15 +369,16 @@ const redis = useCache('redis');
 Atomic counter operations:
 
 ```typescript
-await cache.increment('page:views');        // 1
-await cache.increment('page:views', 10);    // 11
-await cache.decrement('stock:item:42');      // -1
-await cache.decrement('stock:item:42', 5);  // -6
+await cache.increment('page:views'); // 1
+await cache.increment('page:views', 10); // 11
+await cache.decrement('stock:item:42'); // -1
+await cache.decrement('stock:item:42', 5); // -6
 ```
 
 ### Cache Tagging
 
-Group related cache entries with tags for bulk invalidation. Tagging is only available with the Redis store.
+Group related cache entries with tags for bulk invalidation. Tagging is only
+available with the Redis store.
 
 ```typescript
 const cache = useCache('redis');
@@ -389,8 +400,10 @@ await cache.tags(['users', 'premium']).flush();
 ```
 
 How tagging works under the hood:
+
 1. Each tag gets a unique namespace ID stored in Redis
-2. Cache keys are prefixed with the combined namespace (e.g., `abc123|def456:user:123`)
+2. Cache keys are prefixed with the combined namespace (e.g.,
+   `abc123|def456:user:123`)
 3. Flushing a tag regenerates its namespace ID, making all old keys inaccessible
 4. Expired entries are tracked in Redis sorted sets for cleanup
 
@@ -457,24 +470,24 @@ function UserProfile({ userId }: { userId: string }) {
 
 #### Options
 
-| Option | Type | Default | Description |
-|---|---|---|---|
-| `key` | `string` | — | Cache key (required) |
-| `queryFn` | `() => Promise<T>` | — | Async function to fetch data (required) |
-| `ttl` | `number` | `300` | TTL in seconds |
-| `storeName` | `string` | default store | Which store to use |
-| `enabled` | `boolean` | `true` | Enable/disable the query |
-| `refetchOnMount` | `boolean` | `false` | Force refetch on mount |
-| `refetchInterval` | `number` | — | Auto-refetch interval (ms) |
+| Option            | Type               | Default       | Description                             |
+| ----------------- | ------------------ | ------------- | --------------------------------------- |
+| `key`             | `string`           | —             | Cache key (required)                    |
+| `queryFn`         | `() => Promise<T>` | —             | Async function to fetch data (required) |
+| `ttl`             | `number`           | `300`         | TTL in seconds                          |
+| `storeName`       | `string`           | default store | Which store to use                      |
+| `enabled`         | `boolean`          | `true`        | Enable/disable the query                |
+| `refetchOnMount`  | `boolean`          | `false`       | Force refetch on mount                  |
+| `refetchInterval` | `number`           | —             | Auto-refetch interval (ms)              |
 
 #### Return Value
 
-| Property | Type | Description |
-|---|---|---|
-| `data` | `T \| undefined` | The cached/fetched data |
-| `isLoading` | `boolean` | Loading state |
-| `error` | `Error \| null` | Error state |
-| `refetch` | `() => Promise<void>` | Re-run query (uses cache) |
+| Property     | Type                  | Description                  |
+| ------------ | --------------------- | ---------------------------- |
+| `data`       | `T \| undefined`      | The cached/fetched data      |
+| `isLoading`  | `boolean`             | Loading state                |
+| `error`      | `Error \| null`       | Error state                  |
+| `refetch`    | `() => Promise<void>` | Re-run query (uses cache)    |
 | `invalidate` | `() => Promise<void>` | Clear cache and re-run query |
 
 ---
@@ -485,28 +498,28 @@ function UserProfile({ userId }: { userId: string }) {
 
 The main service providing all cache operations.
 
-| Method | Signature | Description |
-|---|---|---|
-| `get` | `get<T>(key, defaultValue?): Promise<T \| undefined>` | Retrieve a cached value |
-| `many` | `many<T>(keys): Promise<Record<string, T>>` | Retrieve multiple values |
-| `put` | `put<T>(key, value, ttl?): Promise<boolean>` | Store a value |
-| `putMany` | `putMany<T>(values, ttl?): Promise<boolean>` | Store multiple values |
-| `add` | `add<T>(key, value, ttl?): Promise<boolean>` | Store only if key doesn't exist |
-| `has` | `has(key): Promise<boolean>` | Check if key exists |
-| `increment` | `increment(key, value?): Promise<number>` | Increment a numeric value |
-| `decrement` | `decrement(key, value?): Promise<number>` | Decrement a numeric value |
-| `forever` | `forever<T>(key, value): Promise<boolean>` | Store indefinitely |
-| `remember` | `remember<T>(key, ttl, callback): Promise<T>` | Get or compute and store |
-| `rememberForever` | `rememberForever<T>(key, callback): Promise<T>` | Get or compute and store forever |
-| `pull` | `pull<T>(key, defaultValue?): Promise<T \| undefined>` | Get and remove |
-| `forget` | `forget(key): Promise<boolean>` | Remove a value |
-| `flush` | `flush(): Promise<boolean>` | Clear all values |
-| `tags` | `tags(names): TaggedCache` | Get tagged cache (Redis only) |
-| `store` | `store(name?): CacheService` | Switch to a different store |
-| `getDefaultStoreName` | `getDefaultStoreName(): string` | Get default store name |
-| `getStoreNames` | `getStoreNames(): string[]` | List all configured stores |
-| `hasStore` | `hasStore(name): boolean` | Check if store is configured |
-| `getPrefix` | `getPrefix(): string` | Get global key prefix |
+| Method                | Signature                                              | Description                      |
+| --------------------- | ------------------------------------------------------ | -------------------------------- |
+| `get`                 | `get<T>(key, defaultValue?): Promise<T \| undefined>`  | Retrieve a cached value          |
+| `many`                | `many<T>(keys): Promise<Record<string, T>>`            | Retrieve multiple values         |
+| `put`                 | `put<T>(key, value, ttl?): Promise<boolean>`           | Store a value                    |
+| `putMany`             | `putMany<T>(values, ttl?): Promise<boolean>`           | Store multiple values            |
+| `add`                 | `add<T>(key, value, ttl?): Promise<boolean>`           | Store only if key doesn't exist  |
+| `has`                 | `has(key): Promise<boolean>`                           | Check if key exists              |
+| `increment`           | `increment(key, value?): Promise<number>`              | Increment a numeric value        |
+| `decrement`           | `decrement(key, value?): Promise<number>`              | Decrement a numeric value        |
+| `forever`             | `forever<T>(key, value): Promise<boolean>`             | Store indefinitely               |
+| `remember`            | `remember<T>(key, ttl, callback): Promise<T>`          | Get or compute and store         |
+| `rememberForever`     | `rememberForever<T>(key, callback): Promise<T>`        | Get or compute and store forever |
+| `pull`                | `pull<T>(key, defaultValue?): Promise<T \| undefined>` | Get and remove                   |
+| `forget`              | `forget(key): Promise<boolean>`                        | Remove a value                   |
+| `flush`               | `flush(): Promise<boolean>`                            | Clear all values                 |
+| `tags`                | `tags(names): TaggedCache`                             | Get tagged cache (Redis only)    |
+| `store`               | `store(name?): CacheService`                           | Switch to a different store      |
+| `getDefaultStoreName` | `getDefaultStoreName(): string`                        | Get default store name           |
+| `getStoreNames`       | `getStoreNames(): string[]`                            | List all configured stores       |
+| `hasStore`            | `hasStore(name): boolean`                              | Check if store is configured     |
+| `getPrefix`           | `getPrefix(): string`                                  | Get global key prefix            |
 
 ### Store Interface
 
@@ -562,7 +575,10 @@ export class LocalStorageStore implements Store {
   }
 
   async put(key: string, value: any, seconds: number): Promise<boolean> {
-    localStorage.setItem(key, JSON.stringify({ value, expires: Date.now() + seconds * 1000 }));
+    localStorage.setItem(
+      key,
+      JSON.stringify({ value, expires: Date.now() + seconds * 1000 })
+    );
     return true;
   }
 
@@ -601,23 +617,23 @@ import type {
 
 If you're coming from Laravel, here's how the API maps:
 
-| Laravel | react-cache |
-|---|---|
-| `Cache::get('key')` | `cache.get('key')` |
-| `Cache::put('key', $val, 3600)` | `cache.put('key', val, 3600)` |
-| `Cache::remember('key', 3600, fn)` | `cache.remember('key', 3600, fn)` |
+| Laravel                             | react-cache                        |
+| ----------------------------------- | ---------------------------------- |
+| `Cache::get('key')`                 | `cache.get('key')`                 |
+| `Cache::put('key', $val, 3600)`     | `cache.put('key', val, 3600)`      |
+| `Cache::remember('key', 3600, fn)`  | `cache.remember('key', 3600, fn)`  |
 | `Cache::rememberForever('key', fn)` | `cache.rememberForever('key', fn)` |
-| `Cache::forget('key')` | `cache.forget('key')` |
-| `Cache::pull('key')` | `cache.pull('key')` |
-| `Cache::flush()` | `cache.flush()` |
-| `Cache::has('key')` | `cache.has('key')` |
-| `Cache::add('key', $val, 3600)` | `cache.add('key', val, 3600)` |
-| `Cache::forever('key', $val)` | `cache.forever('key', val)` |
-| `Cache::increment('key')` | `cache.increment('key')` |
-| `Cache::decrement('key')` | `cache.decrement('key')` |
-| `Cache::store('redis')` | `cache.store('redis')` |
-| `Cache::tags(['users'])->get()` | `cache.tags(['users']).get()` |
-| `config/cache.php` | `defineConfig({...})` |
+| `Cache::forget('key')`              | `cache.forget('key')`              |
+| `Cache::pull('key')`                | `cache.pull('key')`                |
+| `Cache::flush()`                    | `cache.flush()`                    |
+| `Cache::has('key')`                 | `cache.has('key')`                 |
+| `Cache::add('key', $val, 3600)`     | `cache.add('key', val, 3600)`      |
+| `Cache::forever('key', $val)`       | `cache.forever('key', val)`        |
+| `Cache::increment('key')`           | `cache.increment('key')`           |
+| `Cache::decrement('key')`           | `cache.decrement('key')`           |
+| `Cache::store('redis')`             | `cache.store('redis')`             |
+| `Cache::tags(['users'])->get()`     | `cache.tags(['users']).get()`      |
+| `config/cache.php`                  | `defineConfig({...})`              |
 
 ---
 

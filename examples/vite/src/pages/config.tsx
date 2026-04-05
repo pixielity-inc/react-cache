@@ -1,12 +1,9 @@
-import { Card, Chip, Separator } from "@heroui/react";
-import {
-  CacheManager,
-  CACHE_MANAGER,
-} from "@abdokouta/react-cache";
-import { useInject } from "@abdokouta/react-di";
+import { Card, Chip, Separator } from '@heroui/react';
+import { CacheManager, CACHE_MANAGER } from '@abdokouta/react-cache';
+import { useInject } from '@abdokouta/react-di';
 
-import { title } from "@/components/primitives";
-import DefaultLayout from "@/layouts/default";
+import { title } from '@/components/primitives';
+import DefaultLayout from '@/layouts/default';
 
 export default function ConfigPage() {
   const manager = useInject<CacheManager>(CACHE_MANAGER);
@@ -32,9 +29,7 @@ export default function ConfigPage() {
             <Card className="p-6">
               <div className="space-y-3">
                 <div className="flex items-center gap-2">
-                  <span className="text-sm font-semibold w-36">
-                    Default Store:
-                  </span>
+                  <span className="text-sm font-semibold w-36">Default Store:</span>
                   <Chip color="accent" size="sm" variant="soft">
                     <Chip.Label>{defaultStore}</Chip.Label>
                   </Chip>
@@ -42,7 +37,7 @@ export default function ConfigPage() {
                 <div className="flex items-center gap-2">
                   <span className="text-sm font-semibold w-36">Prefix:</span>
                   <Chip size="sm" variant="soft">
-                    <Chip.Label>{prefix || "(none)"}</Chip.Label>
+                    <Chip.Label>{prefix || '(none)'}</Chip.Label>
                   </Chip>
                 </div>
                 <div className="flex items-center gap-2">
@@ -51,7 +46,7 @@ export default function ConfigPage() {
                     {storeNames.map((name) => (
                       <Chip
                         key={name}
-                        color={name === defaultStore ? "success" : "default"}
+                        color={name === defaultStore ? 'success' : 'default'}
                         size="sm"
                         variant="soft"
                       >
@@ -164,22 +159,20 @@ const user = await cache.remember(
               <Card className="p-4">
                 <h4 className="text-lg font-bold mb-2">Memory</h4>
                 <p className="text-xs text-default-500">
-                  In-memory Map with TTL and LRU eviction. Fast, no
-                  dependencies. Data lost on refresh.
+                  In-memory Map with TTL and LRU eviction. Fast, no dependencies. Data lost on
+                  refresh.
                 </p>
               </Card>
               <Card className="p-4">
                 <h4 className="text-lg font-bold mb-2">Redis</h4>
                 <p className="text-xs text-default-500">
-                  Persistent, distributed. Supports tagging. Requires
-                  @abdokouta/react-redis.
+                  Persistent, distributed. Supports tagging. Requires @abdokouta/react-redis.
                 </p>
               </Card>
               <Card className="p-4">
                 <h4 className="text-lg font-bold mb-2">Null</h4>
                 <p className="text-xs text-default-500">
-                  No-op store. All writes succeed, all reads return undefined.
-                  For testing.
+                  No-op store. All writes succeed, all reads return undefined. For testing.
                 </p>
               </Card>
             </div>

@@ -35,6 +35,17 @@ import { defineConfig } from '@abdokouta/react-cache';
 const cacheConfig = defineConfig({
   /*
   |--------------------------------------------------------------------------
+  | Global Registration
+  |--------------------------------------------------------------------------
+  |
+  | When true, cache providers are available to all modules without
+  | explicit imports. Set to false if you want scoped registration.
+  |
+  */
+  isGlobal: true,
+
+  /*
+  |--------------------------------------------------------------------------
   | Default Cache Store
   |--------------------------------------------------------------------------
   */
@@ -46,9 +57,9 @@ const cacheConfig = defineConfig({
   |--------------------------------------------------------------------------
   */
   stores: {
-    /** 
- * Fast in-memory cache for development and frequently accessed data. 
- */
+    /**
+     * Fast in-memory cache for development and frequently accessed data.
+     */
     memory: {
       driver: 'memory',
       maxSize: Number(import.meta.env.VITE_CACHE_MEMORY_MAX_SIZE) || 1000,
@@ -56,9 +67,9 @@ const cacheConfig = defineConfig({
       prefix: 'mem_',
     },
 
-    /** 
- * Persistent Redis cache for production. Supports tagging. 
- */
+    /**
+     * Persistent Redis cache for production. Supports tagging.
+     */
     redis: {
       driver: 'redis',
       connection: import.meta.env.VITE_REDIS_CACHE_CONNECTION || 'cache',
@@ -66,9 +77,9 @@ const cacheConfig = defineConfig({
       ttl: Number(import.meta.env.VITE_CACHE_REDIS_TTL) || 3600,
     },
 
-    /** 
- * Dedicated Redis store for session data with longer TTL. 
- */
+    /**
+     * Dedicated Redis store for session data with longer TTL.
+     */
     session: {
       driver: 'redis',
       connection: import.meta.env.VITE_REDIS_SESSION_CONNECTION || 'session',
@@ -76,9 +87,9 @@ const cacheConfig = defineConfig({
       ttl: Number(import.meta.env.VITE_CACHE_SESSION_TTL) || 86400,
     },
 
-    /** 
- * No-op cache for testing or disabling cache. 
- */
+    /**
+     * No-op cache for testing or disabling cache.
+     */
     null: {
       driver: 'null',
     },

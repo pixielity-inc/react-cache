@@ -2,28 +2,13 @@
  * Cache Module
  *
  * Configures the cache system for dependency injection.
- * Registers CacheManager as both CACHE_MANAGER and CACHE_SERVICE
- * (the manager IS a CacheService via inheritance).
+ *
+ * Registers:
+ * - `CACHE_CONFIG` — raw config object
+ * - `CACHE_MANAGER` — CacheManager (store resolution, driver creation)
+ * - `CACHE_SERVICE` — CacheService for the default store (public API)
  *
  * @module cache.module
- *
- * @example
- * ```typescript
- * import { Module } from '@abdokouta/react-di';
- * import { CacheModule } from '@abdokouta/react-cache';
- *
- * @Module({
- *   imports: [
- *     CacheModule.forRoot({
- *       default: 'memory',
- *       stores: {
- *         memory: { driver: 'memory', maxSize: 1000, ttl: 300 },
- *       },
- *     }),
- *   ],
- * })
- * export class AppModule {}
- * ```
  */
 
 import { Module, type DynamicModule } from '@abdokouta/react-di';
@@ -36,22 +21,15 @@ import { CACHE_CONFIG, CACHE_SERVICE, CACHE_MANAGER } from '@/constants/tokens.c
 // biome-ignore lint/complexity/noStaticOnlyClass: Module pattern requires static methods
 export class CacheModule {
   /**
-   * Configure the cache module with the given options.
-   *
-   * Registers:
-   * - `CACHE_CONFIG` — the raw config object
-   * - `CACHE_MANAGER` — the CacheManager instance (cache ops + management)
-   * - `CACHE_SERVICE` — same instance, typed as CacheService (cache ops only)
-   *
-   * Both tokens point to the same CacheManager instance because the
-   * manager extends CacheService (inherits all cache operations).
+   * Configure the cache module.
    *
    * @param config - Cache configuration from defineConfig()
    * @returns Dynamic module definition
    */
   static forRoot(config: CacheModuleOptions): DynamicModule {
-    // Create the manager eagerly — it resolves the default store in its constructor
+    const global = config.isGlobal ?? true;
     const manager = new CacheManager(config);
+    const defaultCache = manager.store();
 
     return {
       module: CacheModule,
@@ -59,21 +37,20 @@ export class CacheModule {
         {
           provide: CACHE_CONFIG,
           useValue: config,
-          isGlobal: true,
+          isGlobal: global,
         },
         {
           provide: CACHE_MANAGER,
           useValue: manager,
-          isGlobal: true,
+          isGlobal: global,
         },
         {
-          // Same instance — manager IS a CacheService via inheritance
           provide: CACHE_SERVICE,
-          useValue: manager,
-          isGlobal: true,
+          useValue: defaultCache,
+          isGlobal: global,
         },
       ],
-      exports: [CACHE_SERVICE, CACHE_MANAGER, CACHE_CONFIG],
+      exports: global ? [] : [CACHE_SERVICE, CACHE_MANAGER, CACHE_CONFIG],
     };
   }
 }

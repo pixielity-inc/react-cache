@@ -1,18 +1,14 @@
-import { lazy, Suspense } from "react";
-import { Route, Routes } from "react-router-dom";
+import { lazy, Suspense } from 'react';
+import { Route, Routes } from 'react-router-dom';
 
-const IndexPage = lazy(() => import("@/pages/index"));
-const ConfigPage = lazy(() => import("@/pages/config"));
-const AdvancedPage = lazy(() => import("@/pages/advanced"));
+const IndexPage = lazy(() => import('@/pages/index'));
+const ConfigPage = lazy(() => import('@/pages/config'));
+const AdvancedPage = lazy(() => import('@/pages/advanced'));
 
 function App() {
   return (
     <Suspense
-      fallback={
-        <div className="flex items-center justify-center h-screen">
-          Loading...
-        </div>
-      }
+      fallback={<div className="flex items-center justify-center h-screen">Loading...</div>}
     >
       <Routes>
         <Route element={<IndexPage />} path="/" />

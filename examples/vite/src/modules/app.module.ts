@@ -1,6 +1,6 @@
-import { Module } from "@abdokouta/react-di";
-import { CacheModule } from "@abdokouta/react-cache";
-import cacheConfig from "@/config/cache.config";
+import { Module } from '@abdokouta/react-di';
+import { CacheModule } from '@abdokouta/react-cache';
+import cacheConfig from '@/config/cache.config';
 
 @Module({
   imports: [

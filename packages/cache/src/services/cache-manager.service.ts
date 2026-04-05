@@ -14,14 +14,10 @@
  * @module services/cache-manager
  */
 
-import { MultipleInstanceManager } from '@abdokouta/react-support';
+import { MultipleInstanceManager } from '@abdokouta/react-cache';
 
 import type { StoreConfig } from '@/types';
-import type {
-  Store,
-  CacheModuleOptions,
-  RedisFactory,
-} from '@/interfaces';
+import type { Store, CacheModuleOptions, RedisFactory } from '@/interfaces';
 import { MemoryStore } from '@/stores/memory.store';
 import { RedisStore } from '@/stores/redis.store';
 import { NullStore } from '@/stores/null.store';
@@ -57,7 +53,7 @@ export class CacheManager extends MultipleInstanceManager<Store> {
 
   constructor(
     @Inject(CACHE_CONFIG) config: CacheModuleOptions,
-    @Optional() @Inject(REDIS_FACTORY) redisFactory?: RedisFactory,
+    @Optional() @Inject(REDIS_FACTORY) redisFactory?: RedisFactory
   ) {
     super();
     this.config = config;

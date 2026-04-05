@@ -12,10 +12,10 @@ This document describes all the advanced patterns implemented in this example.
 
 ```typescript
 ConfigModule.forRoot({
-  apiUrl: "https://api.example.com",
+  apiUrl: 'https://api.example.com',
   timeout: 5000,
   retries: 3,
-  environment: "development",
+  environment: 'development',
 });
 ```
 
@@ -207,15 +207,15 @@ const service = new TestableService(mockLogger, mockCache);
 ```typescript
 // Mock all dependencies
 const service = new TestableService(mockLogger, mockCache);
-expect(service.calculateDiscount(100, "gold")).toBe(85);
+expect(service.calculateDiscount(100, 'gold')).toBe(85);
 ```
 
 **Verification**: Verify interactions with dependencies
 
 ```typescript
-service.fetchUserData("123");
-expect(mockLogger.log).toHaveBeenCalledWith("Fetching user data for: 123");
-expect(mockCache.get).toHaveBeenCalledWith("user:123");
+service.fetchUserData('123');
+expect(mockLogger.log).toHaveBeenCalledWith('Fetching user data for: 123');
+expect(mockCache.get).toHaveBeenCalledWith('user:123');
 ```
 
 **Integration Testing**: Test with real dependencies
@@ -233,9 +233,9 @@ const service = new TestableService(realLogger, realCache);
 **Examples**:
 
 ```typescript
-export const API_CONNECTION = Symbol.for("API_CONNECTION");
-export const CACHE_CONFIG = Symbol.for("CACHE_CONFIG");
-export const CONFIG_OPTIONS = Symbol.for("CONFIG_OPTIONS");
+export const API_CONNECTION = Symbol.for('API_CONNECTION');
+export const CACHE_CONFIG = Symbol.for('CACHE_CONFIG');
+export const CONFIG_OPTIONS = Symbol.for('CONFIG_OPTIONS');
 ```
 
 **Benefits**:

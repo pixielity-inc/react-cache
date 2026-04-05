@@ -65,7 +65,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
 ### 2. Create Services
 
 ```typescript
-import { Injectable, Inject } from "@abdokouta/react-di";
+import { Injectable, Inject } from '@abdokouta/react-di';
 
 @Injectable()
 export class LoggerService {
@@ -79,8 +79,8 @@ export class UserService {
   constructor(@Inject(LoggerService) private logger: LoggerService) {}
 
   getUsers() {
-    this.logger.log("Fetching users...");
-    return [{ id: 1, name: "John" }];
+    this.logger.log('Fetching users...');
+    return [{ id: 1, name: 'John' }];
   }
 }
 ```
@@ -88,7 +88,7 @@ export class UserService {
 ### 3. Create Modules
 
 ```typescript
-import { Module } from "@abdokouta/react-di";
+import { Module } from '@abdokouta/react-di';
 
 @Module({
   providers: [LoggerService, UserService],
@@ -119,14 +119,14 @@ export function UserList() {
 // Full configuration
 Container.configure()
   .withModule(AppModule)
-  .withLogLevel("debug")
-  .withDefaultScope("Singleton")
+  .withLogLevel('debug')
+  .withDefaultScope('Singleton')
   .build();
 
 // With config object
 Container.configure()
   .withModule(AppModule)
-  .withConfig({ logLevel: "debug", defaultScope: "Singleton" })
+  .withConfig({ logLevel: 'debug', defaultScope: 'Singleton' })
   .build();
 
 // With defaults
@@ -136,7 +136,7 @@ Container.configure().withModule(AppModule).withDefaults().build();
 ## 🌍 Global Modules
 
 ```typescript
-import { Module, Global } from "@abdokouta/react-di";
+import { Module, Global } from '@abdokouta/react-di';
 
 @Global()
 @Module({
@@ -148,7 +148,7 @@ export class LoggerModule {}
 ## 🔄 Dynamic Modules
 
 ```typescript
-import { Module, forRoot, type DynamicModule } from "@abdokouta/react-di";
+import { Module, forRoot, type DynamicModule } from '@abdokouta/react-di';
 
 @Module({})
 export class ConfigModule {

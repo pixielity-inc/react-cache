@@ -6,7 +6,7 @@
  * @module @abdokouta/react-di
  * @category Config
  */
-import { defineConfig } from "@abdokouta/react-di";
+import { defineConfig } from '@abdokouta/react-di';
 
 /**
  * Default container configuration
@@ -18,10 +18,10 @@ export const containerConfig = defineConfig({
    * Default log level
    * Change to "debug" for detailed logs, "none" to disable logging
    */
-  logLevel: "debug",
+  logLevel: 'debug',
 
   /**
    * Default scope for providers
    */
-  defaultScope: "Singleton",
+  defaultScope: 'Singleton',
 });

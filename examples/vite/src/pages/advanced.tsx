@@ -1,30 +1,23 @@
-import { useState } from "react";
-import { Button, Card, Chip, Separator } from "@heroui/react";
-import {
-  CacheService,
-  CacheManager,
-  CACHE_SERVICE,
-  CACHE_MANAGER,
-} from "@abdokouta/react-cache";
-import { useInject } from "@abdokouta/react-di";
+import { useState } from 'react';
+import { Button, Card, Chip, Separator } from '@heroui/react';
+import { CacheService, CacheManager, CACHE_SERVICE, CACHE_MANAGER } from '@abdokouta/react-cache';
+import { useInject } from '@abdokouta/react-di';
 
-import { title } from "@/components/primitives";
-import DefaultLayout from "@/layouts/default";
+import { title } from '@/components/primitives';
+import DefaultLayout from '@/layouts/default';
 
 export default function AdvancedPage() {
   const cache = useInject<CacheService>(CACHE_SERVICE);
   const manager = useInject<CacheManager>(CACHE_MANAGER);
 
   // Basic ops state
-  const [lastKey, setLastKey] = useState("");
+  const [lastKey, setLastKey] = useState('');
   const [getValue, setGetValue] = useState<string | undefined>();
   const [hasResult, setHasResult] = useState<boolean | null>(null);
 
   // Remember state
   const [rememberResult, setRememberResult] = useState<string | null>(null);
-  const [rememberForeverResult, setRememberForeverResult] = useState<
-    string | null
-  >(null);
+  const [rememberForeverResult, setRememberForeverResult] = useState<string | null>(null);
 
   // Counter state
   const [counter, setCounter] = useState<number | null>(null);
@@ -33,9 +26,7 @@ export default function AdvancedPage() {
   const [pullResult, setPullResult] = useState<string | null>(null);
 
   // Multi state
-  const [manyResult, setManyResult] = useState<Record<string, unknown> | null>(
-    null,
-  );
+  const [manyResult, setManyResult] = useState<Record<string, unknown> | null>(null);
 
   // Store switching
   const storeNames = manager.getStoreNames();
@@ -56,7 +47,7 @@ export default function AdvancedPage() {
 
     const value = await cache.get<string>(lastKey);
 
-    setGetValue(value ?? "(not found)");
+    setGetValue(value ?? '(not found)');
   };
 
   const handleHas = async () => {
@@ -77,7 +68,7 @@ export default function AdvancedPage() {
 
   const handleFlush = async () => {
     await cache.flush();
-    setLastKey("");
+    setLastKey('');
     setGetValue(undefined);
     setHasResult(null);
     setRememberResult(null);
@@ -89,7 +80,7 @@ export default function AdvancedPage() {
 
   // --- Remember ---
   const handleRemember = async () => {
-    const value = await cache.remember("adv:remember", 30, async () => {
+    const value = await cache.remember('adv:remember', 30, async () => {
       return `Computed at ${new Date().toLocaleTimeString()}`;
     });
 
@@ -97,7 +88,7 @@ export default function AdvancedPage() {
   };
 
   const handleRememberForever = async () => {
-    const value = await cache.rememberForever("adv:forever", async () => {
+    const value = await cache.rememberForever('adv:forever', async () => {
       return `Stored forever at ${new Date().toLocaleTimeString()}`;
     });
 
@@ -106,32 +97,29 @@ export default function AdvancedPage() {
 
   // --- Counters ---
   const handleIncrement = async () => {
-    const value = await cache.increment("adv:counter");
+    const value = await cache.increment('adv:counter');
 
     setCounter(value);
   };
 
   const handleDecrement = async () => {
-    const value = await cache.decrement("adv:counter");
+    const value = await cache.decrement('adv:counter');
 
     setCounter(value);
   };
 
   // --- Pull ---
   const handlePull = async () => {
-    await cache.put("adv:pull-me", "I will be removed after pull", 60);
-    const value = await cache.pull<string>("adv:pull-me");
+    await cache.put('adv:pull-me', 'I will be removed after pull', 60);
+    const value = await cache.pull<string>('adv:pull-me');
 
-    setPullResult(value ?? "(empty)");
+    setPullResult(value ?? '(empty)');
   };
 
   // --- Many ---
   const handlePutMany = async () => {
-    await cache.putMany(
-      { "adv:a": "Alpha", "adv:b": "Bravo", "adv:c": "Charlie" },
-      60,
-    );
-    const values = await cache.many(["adv:a", "adv:b", "adv:c"]);
+    await cache.putMany({ 'adv:a': 'Alpha', 'adv:b': 'Bravo', 'adv:c': 'Charlie' }, 60);
+    const values = await cache.many(['adv:a', 'adv:b', 'adv:c']);
 
     setManyResult(values);
   };
@@ -140,7 +128,7 @@ export default function AdvancedPage() {
   const [addResult, setAddResult] = useState<boolean | null>(null);
 
   const handleAdd = async () => {
-    const added = await cache.add("adv:unique", "first-write-wins", 60);
+    const added = await cache.add('adv:unique', 'first-write-wins', 60);
 
     setAddResult(added);
   };
@@ -150,9 +138,7 @@ export default function AdvancedPage() {
       <section className="flex flex-col items-center justify-center gap-4 py-8 md:py-10">
         <div className="inline-block max-w-xl text-center justify-center">
           <span className={title()}>Advanced Cache Operations</span>
-          <p className="text-default-500 mt-4">
-            Interactive demo of every CacheService method
-          </p>
+          <p className="text-default-500 mt-4">Interactive demo of every CacheService method</p>
         </div>
 
         <div className="w-full max-w-5xl space-y-8">
@@ -163,9 +149,7 @@ export default function AdvancedPage() {
               {storeNames.map((name) => (
                 <Chip
                   key={name}
-                  color={
-                    name === manager.getDefaultDriver() ? "accent" : "default"
-                  }
+                  color={name === manager.getDefaultDriver() ? 'accent' : 'default'}
                   size="sm"
                   variant="soft"
                 >
@@ -183,36 +167,19 @@ export default function AdvancedPage() {
 
           {/* Basic Operations */}
           <div className="space-y-4">
-            <h2 className="text-2xl font-bold">
-              put / get / has / forget / flush
-            </h2>
+            <h2 className="text-2xl font-bold">put / get / has / forget / flush</h2>
             <Card className="p-6">
               <div className="flex flex-wrap gap-2 mb-4">
                 <Button size="sm" onPress={handlePut}>
                   put()
                 </Button>
-                <Button
-                  isDisabled={!lastKey}
-                  size="sm"
-                  variant="secondary"
-                  onPress={handleGet}
-                >
+                <Button isDisabled={!lastKey} size="sm" variant="secondary" onPress={handleGet}>
                   get()
                 </Button>
-                <Button
-                  isDisabled={!lastKey}
-                  size="sm"
-                  variant="secondary"
-                  onPress={handleHas}
-                >
+                <Button isDisabled={!lastKey} size="sm" variant="secondary" onPress={handleHas}>
                   has()
                 </Button>
-                <Button
-                  isDisabled={!lastKey}
-                  size="sm"
-                  variant="outline"
-                  onPress={handleForget}
-                >
+                <Button isDisabled={!lastKey} size="sm" variant="outline" onPress={handleForget}>
                   forget()
                 </Button>
                 <Button size="sm" variant="danger" onPress={handleFlush}>
@@ -232,8 +199,7 @@ export default function AdvancedPage() {
                   )}
                   {hasResult !== null && (
                     <p>
-                      <span className="font-semibold">has():</span>{" "}
-                      {hasResult ? "true" : "false"}
+                      <span className="font-semibold">has():</span> {hasResult ? 'true' : 'false'}
                     </p>
                   )}
                 </div>
@@ -248,9 +214,7 @@ export default function AdvancedPage() {
             <h2 className="text-2xl font-bold">remember / rememberForever</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <Card className="p-6">
-                <h3 className="text-lg font-bold mb-3">
-                  remember(key, ttl, fn)
-                </h3>
+                <h3 className="text-lg font-bold mb-3">remember(key, ttl, fn)</h3>
                 <p className="text-default-500 text-xs mb-3">
                   Returns cached value or computes and stores it
                 </p>
@@ -260,20 +224,14 @@ export default function AdvancedPage() {
                 {rememberResult && (
                   <div className="mt-3 p-2 bg-default-100 rounded text-xs">
                     {rememberResult}
-                    <p className="text-default-400 mt-1 italic">
-                      Same value until 30s TTL expires
-                    </p>
+                    <p className="text-default-400 mt-1 italic">Same value until 30s TTL expires</p>
                   </div>
                 )}
               </Card>
 
               <Card className="p-6">
-                <h3 className="text-lg font-bold mb-3">
-                  rememberForever(key, fn)
-                </h3>
-                <p className="text-default-500 text-xs mb-3">
-                  Same as remember but never expires
-                </p>
+                <h3 className="text-lg font-bold mb-3">rememberForever(key, fn)</h3>
+                <p className="text-default-500 text-xs mb-3">Same as remember but never expires</p>
                 <Button size="sm" onPress={handleRememberForever}>
                   Run
                 </Button>
@@ -314,18 +272,14 @@ export default function AdvancedPage() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <Card className="p-6">
                 <h3 className="text-lg font-bold mb-3">pull(key)</h3>
-                <p className="text-default-500 text-xs mb-3">
-                  Get and remove in one call
-                </p>
+                <p className="text-default-500 text-xs mb-3">Get and remove in one call</p>
                 <Button size="sm" onPress={handlePull}>
                   Run
                 </Button>
                 {pullResult && (
                   <div className="mt-3 p-2 bg-default-100 rounded text-xs">
                     {pullResult}
-                    <p className="text-default-400 mt-1 italic">
-                      Key is now deleted
-                    </p>
+                    <p className="text-default-400 mt-1 italic">Key is now deleted</p>
                   </div>
                 )}
               </Card>
@@ -340,14 +294,8 @@ export default function AdvancedPage() {
                 </Button>
                 {addResult !== null && (
                   <div className="mt-3 p-2 bg-default-100 rounded text-xs">
-                    <Chip
-                      color={addResult ? "success" : "warning"}
-                      size="sm"
-                      variant="soft"
-                    >
-                      <Chip.Label>
-                        {addResult ? "Added (new)" : "Skipped (exists)"}
-                      </Chip.Label>
+                    <Chip color={addResult ? 'success' : 'warning'} size="sm" variant="soft">
+                      <Chip.Label>{addResult ? 'Added (new)' : 'Skipped (exists)'}</Chip.Label>
                     </Chip>
                   </div>
                 )}
@@ -355,9 +303,7 @@ export default function AdvancedPage() {
 
               <Card className="p-6">
                 <h3 className="text-lg font-bold mb-3">putMany / many</h3>
-                <p className="text-default-500 text-xs mb-3">
-                  Bulk store and retrieve
-                </p>
+                <p className="text-default-500 text-xs mb-3">Bulk store and retrieve</p>
                 <Button size="sm" onPress={handlePutMany}>
                   Run
                 </Button>

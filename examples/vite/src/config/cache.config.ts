@@ -1,81 +1,106 @@
 /**
  * Cache Configuration
  *
- * Uses @abdokouta/react-cache's defineConfig for type-safe configuration.
- * Supports memory, Redis (Upstash), and null drivers.
- *
- * To use Redis, pass an actual RedisConnection instance (e.g., from @upstash/redis).
- * The memory driver is used by default and requires no external dependencies.
+ * Unified cache configuration following Laravel and NestJS patterns.
+ * All cache stores and settings are defined in a single config object.
  *
  * @module config/cache
+ *
+ * @example
+ * ```typescript
+ * import cacheConfig from '@abdokouta/react-cache/config';
+ *
+ * CacheModule.forRoot(cacheConfig);
+ * ```
  */
 
-import { defineConfig } from "@abdokouta/react-cache";
+import { defineConfig } from '@abdokouta/react-cache';
 
 /**
- * Create an Upstash Redis connection if credentials are available.
- * Returns undefined when credentials are missing (Redis store won't be usable).
+ * Cache configuration
+ *
+ * Adapts to your environment via Vite environment variables.
+ *
+ * Environment Variables:
+ * - VITE_CACHE_DRIVER: Default cache driver (default: 'memory')
+ * - VITE_CACHE_PREFIX: Global cache key prefix (default: 'app_')
+ * - VITE_CACHE_MEMORY_MAX_SIZE: Memory store max entries (default: 1000)
+ * - VITE_CACHE_MEMORY_TTL: Memory store TTL in seconds (default: 300)
+ * - VITE_REDIS_CACHE_CONNECTION: Redis connection name (default: 'cache')
+ * - VITE_CACHE_REDIS_PREFIX: Redis key prefix (default: 'cache_')
+ * - VITE_CACHE_REDIS_TTL: Redis TTL in seconds (default: 3600)
+ * - VITE_REDIS_SESSION_CONNECTION: Session Redis connection (default: 'session')
+ * - VITE_CACHE_SESSION_TTL: Session TTL in seconds (default: 86400)
  */
-function createUpstashConnection() {
-  const url = import.meta.env.VITE_UPSTASH_REDIS_REST_URL;
-  const token = import.meta.env.VITE_UPSTASH_REDIS_REST_TOKEN;
-
-  if (!url || !token) {
-    return undefined;
-  }
-
-  // Lazy-import @upstash/redis at runtime — only loaded when Redis is actually used.
-  // This avoids a hard dependency for apps that only use the memory driver.
-  //
-  // Example with @upstash/redis:
-  //   import { Redis } from "@upstash/redis";
-  //   return new Redis({ url, token });
-  //
-  // For now, return undefined (memory is the default).
-  return undefined;
-}
-
-const redisConnection = createUpstashConnection();
-
 const cacheConfig = defineConfig({
-  default: import.meta.env.VITE_CACHE_DRIVER || "memory",
+  /*
+  |--------------------------------------------------------------------------
+  | Global Registration
+  |--------------------------------------------------------------------------
+  |
+  | When true, cache providers are available to all modules without
+  | explicit imports. Set to false if you want scoped registration.
+  |
+  */
+  isGlobal: true,
 
+  /*
+  |--------------------------------------------------------------------------
+  | Default Cache Store
+  |--------------------------------------------------------------------------
+  */
+  default: import.meta.env.VITE_CACHE_DRIVER || 'memory',
+
+  /*
+  |--------------------------------------------------------------------------
+  | Cache Stores
+  |--------------------------------------------------------------------------
+  */
   stores: {
-    /** 
- * Fast in-memory cache. Data is lost on page refresh. 
- */
+    /**
+     * Fast in-memory cache for development and frequently accessed data.
+     */
     memory: {
-      driver: "memory",
-      maxSize: Number(import.meta.env.VITE_CACHE_MEMORY_MAX_SIZE) || 100,
+      driver: 'memory',
+      maxSize: Number(import.meta.env.VITE_CACHE_MEMORY_MAX_SIZE) || 1000,
       ttl: Number(import.meta.env.VITE_CACHE_MEMORY_TTL) || 300,
-      prefix: "mem_",
+      prefix: 'mem_',
     },
 
     /**
-     * Redis cache via Upstash.
-     * Requires VITE_UPSTASH_REDIS_REST_URL and VITE_UPSTASH_REDIS_REST_TOKEN.
-     * Only usable when a valid connection is provided.
+     * Persistent Redis cache for production. Supports tagging.
      */
-    ...(redisConnection
-      ? {
-          redis: {
-            driver: "redis" as const,
-            connection: redisConnection,
-            prefix: import.meta.env.VITE_CACHE_REDIS_PREFIX || "cache_",
-            ttl: Number(import.meta.env.VITE_CACHE_REDIS_TTL) || 3600,
-          },
-        }
-      : {}),
+    redis: {
+      driver: 'redis',
+      connection: import.meta.env.VITE_REDIS_CACHE_CONNECTION || 'cache',
+      prefix: import.meta.env.VITE_CACHE_REDIS_PREFIX || 'cache_',
+      ttl: Number(import.meta.env.VITE_CACHE_REDIS_TTL) || 3600,
+    },
 
-    /** 
- * No-op cache for testing or disabling cache. 
- */
+    /**
+     * Dedicated Redis store for session data with longer TTL.
+     */
+    session: {
+      driver: 'redis',
+      connection: import.meta.env.VITE_REDIS_SESSION_CONNECTION || 'session',
+      prefix: 'sess_',
+      ttl: Number(import.meta.env.VITE_CACHE_SESSION_TTL) || 86400,
+    },
+
+    /**
+     * No-op cache for testing or disabling cache.
+     */
     null: {
-      driver: "null",
+      driver: 'null',
     },
   },
 
-  prefix: import.meta.env.VITE_CACHE_PREFIX || "app_",
+  /*
+  |--------------------------------------------------------------------------
+  | Cache Key Prefix
+  |--------------------------------------------------------------------------
+  */
+  prefix: import.meta.env.VITE_CACHE_PREFIX || 'app_',
 });
 
 export default cacheConfig;

@@ -1,6 +1,7 @@
 # App Cache Demo
 
-This example demonstrates the `@abdokouta/react-di` dependency injection container with comprehensive patterns and use cases.
+This example demonstrates the `@abdokouta/react-di` dependency injection
+container with comprehensive patterns and use cases.
 
 ## Features Demonstrated
 
@@ -89,7 +90,7 @@ export class MyModule {}
 
 ```typescript
 ConfigModule.forRoot({
-  apiUrl: "https://api.example.com",
+  apiUrl: 'https://api.example.com',
   timeout: 5000,
 });
 ```

@@ -1,6 +1,6 @@
-import { ContainerProvider } from "@abdokouta/react-di";
+import { ContainerProvider } from '@abdokouta/react-di';
 
-import { AppModule } from "@/modules/app.module";
+import { AppModule } from '@/modules/app.module';
 
 export function Provider({ children }: { children: React.ReactNode }) {
   return <ContainerProvider module={AppModule}>{children}</ContainerProvider>;

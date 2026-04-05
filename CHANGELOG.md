@@ -4,9 +4,13 @@
 
 ### 🚀 Breaking Changes
 
-- **Container initialization moved outside React lifecycle** - `Inversiland.run()` must now be called BEFORE `ReactDOM.createRoot()` to properly support HMR
-- **New `Container` builder API** - Fluent builder pattern for container configuration
-- **`ContainerProvider` simplified** - No longer initializes the container, only provides context
+- **Container initialization moved outside React lifecycle** -
+  `Inversiland.run()` must now be called BEFORE `ReactDOM.createRoot()` to
+  properly support HMR
+- **New `Container` builder API** - Fluent builder pattern for container
+  configuration
+- **`ContainerProvider` simplified** - No longer initializes the container, only
+  provides context
 
 ### ✨ New Features
 
@@ -15,12 +19,12 @@
 New fluent builder pattern for initializing the DI container:
 
 ```typescript
-import { Container } from "@abdokouta/react-di";
+import { Container } from '@abdokouta/react-di';
 
 Container.configure()
   .withModule(AppModule)
-  .withLogLevel("debug")
-  .withDefaultScope("Singleton")
+  .withLogLevel('debug')
+  .withDefaultScope('Singleton')
   .build();
 ```
 
@@ -29,10 +33,13 @@ Available methods:
 - `.configure()` - Start configuration
 - `.withModule(module)` - Set root module (required)
 - `.withLogLevel(level)` - Set log level ("none" | "info" | "debug")
-- `.withDefaultScope(scope)` - Set default scope ("Singleton" | "Transient" | "Request")
+- `.withDefaultScope(scope)` - Set default scope ("Singleton" | "Transient" |
+  "Request")
 - `.withConfig(config)` - Pass config object directly
-- `.withDefaults()` - Apply default config (logLevel: "info", defaultScope: "Singleton")
-- `.withDevDefaults()` - Apply dev defaults (logLevel: "debug", defaultScope: "Singleton")
+- `.withDefaults()` - Apply default config (logLevel: "info", defaultScope:
+  "Singleton")
+- `.withDevDefaults()` - Apply dev defaults (logLevel: "debug", defaultScope:
+  "Singleton")
 - `.build()` - Initialize the container
 
 #### `initContainer` Utility
@@ -40,21 +47,27 @@ Available methods:
 Alternative functional approach for container initialization:
 
 ```typescript
-import { initContainer } from "@abdokouta/react-di";
+import { initContainer } from '@abdokouta/react-di';
 
 initContainer({
   module: AppModule,
-  logLevel: "debug",
-  defaultScope: "Singleton",
+  logLevel: 'debug',
+  defaultScope: 'Singleton',
 });
 ```
 
 ### 🐛 Bug Fixes
 
-- **Fixed HMR "Inversiland twice" error** - Container initialization now happens outside React's lifecycle, preventing re-initialization on hot module replacement
-- **Fixed Global module provider resolution** - `@Global()` decorator now correctly moves providers to `globalProviders` regardless of decorator execution order
-- **Fixed `ConfigModule.forRoot()` pattern** - Changed to `useValue` pattern for proper configuration injection
-- **Fixed Symbol token injection** - Use `Symbol.for()` for DI tokens to survive HMR reloads
+- **Fixed HMR "Inversiland twice" error** - Container initialization now happens
+  outside React's lifecycle, preventing re-initialization on hot module
+  replacement
+- **Fixed Global module provider resolution** - `@Global()` decorator now
+  correctly moves providers to `globalProviders` regardless of decorator
+  execution order
+- **Fixed `ConfigModule.forRoot()` pattern** - Changed to `useValue` pattern for
+  proper configuration injection
+- **Fixed Symbol token injection** - Use `Symbol.for()` for DI tokens to survive
+  HMR reloads
 
 ### 📝 Migration Guide
 
@@ -97,7 +110,10 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
 
 ### 🙏 Acknowledgments
 
-- Thanks to [@carlossalasamper](https://github.com/carlossalasamper) for the [Inversiland](https://github.com/inversiland/inversiland) library and the [react-clean-architecture](https://github.com/carlossalasamper/react-clean-architecture) reference implementation
+- Thanks to [@carlossalasamper](https://github.com/carlossalasamper) for the
+  [Inversiland](https://github.com/inversiland/inversiland) library and the
+  [react-clean-architecture](https://github.com/carlossalasamper/react-clean-architecture)
+  reference implementation
 
 ---
 
