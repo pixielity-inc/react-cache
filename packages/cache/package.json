@@ -62,10 +62,10 @@
   },
   "dependencies": {
     "@abdokouta/react-di": "^2.1.3",
-    "@abdokouta/react-support": "^1.1.0"
+    "@abdokouta/react-redis": "^1.0.4",
+    "@abdokouta/react-support": "^2.0.0"
   },
   "peerDependencies": {
-    "@abdokouta/react-redis": "^1.0.0",
     "react": "^18.0.0 || ^19.0.0"
   },
   "peerDependenciesMeta": {

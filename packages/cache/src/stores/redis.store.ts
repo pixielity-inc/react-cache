@@ -1,363 +1,127 @@
 /**
  * Redis Cache Store
  *
- * Redis-backed cache implementation with support for tagging.
- * Uses @abdokouta/redis (Upstash) for browser-compatible Redis access.
- *
- * **Features:**
- * - Persistent caching across application restarts
- * - Cache tagging support
- * - Atomic increment/decrement operations
- * - TTL support at the Redis level
- * - Distributed caching (multiple servers can share cache)
- *
- * **Use Cases:**
- * - Production applications
- * - Distributed systems
- * - When cache persistence is required
- * - When cache tagging is needed
+ * Redis-backed cache using @abdokouta/react-redis for connections.
+ * Connection is resolved lazily from RedisService and cached.
  *
  * @module stores/redis
  */
 
-import type { TaggableStore, TaggedCache, RedisConnection, RedisFactory } from '@/interfaces';
+import type { RedisConnection, IRedisService } from '@abdokouta/react-redis';
+import type { TaggableStore, TaggedCache } from '@/interfaces';
 import { RedisTagSet } from '@/tags/redis-tag-set';
 import { TaggedCache as TaggedCacheImpl } from '@/tags/tagged-cache';
 
-/**
- * Redis cache store implementation
- *
- * Follows Laravel's pattern: receives a Redis factory and a connection name.
- * The actual connection is resolved lazily on each operation via
- * `factory.connection(name)`.
- *
- * @example
- * ```typescript
- * const store = new RedisStore(redisFactory, 'cache_', 'cache');
- *
- * await store.put('user:123', { name: 'John' }, 3600);
- * const user = await store.get('user:123');
- *
- * const taggedCache = store.tags(['users', 'premium']);
- * await taggedCache.put('user:456', { name: 'Jane' }, 3600);
- * await taggedCache.flush();
- * ```
- */
 export class RedisStore implements TaggableStore {
-  /**
-   * Redis factory for resolving connections by name
-   */
-  private readonly redis: RedisFactory;
-
-  /**
-   * Cache key prefix
-   */
+  private readonly redisService: IRedisService;
   private readonly prefix: string;
-
-  /**
-   * Connection name to resolve from the factory
-   */
   private readonly connectionName: string;
+  private _connection?: RedisConnection;
 
-  /**
-   * Create a new Redis store
-   *
-   * @param redis - Redis factory instance
-   * @param prefix - Cache key prefix
-   * @param connection - Connection name (default: 'default')
-   */
-  constructor(redis: RedisFactory, prefix: string = '', connection: string = 'default') {
-    this.redis = redis;
+  constructor(
+    redisService: IRedisService,
+    prefix: string = '',
+    connection: string = 'default',
+  ) {
+    this.redisService = redisService;
     this.prefix = prefix;
     this.connectionName = connection;
   }
 
-  /**
-   * Get the Redis connection instance
-   *
-   * Resolves the connection from the factory on each call,
-   * matching Laravel's `$this->connection()` pattern.
-   *
-   * @returns The Redis connection
-   */
-  connection(): RedisConnection {
-    return this.redis.connection(this.connectionName);
+  /** Resolve connection lazily and cache it. */
+  private async conn(): Promise<RedisConnection> {
+    if (!this._connection) {
+      this._connection = await this.redisService.connection(this.connectionName);
+    }
+    return this._connection!;
   }
 
-  /**
-   * Retrieve an item from the cache
-   *
-   * @param key - Cache key
-   * @returns The cached value, or undefined if not found
-   *
-   * @example
-   * ```typescript
-   * const user = await store.get('user:123');
-   * ```
-   */
   async get(key: string): Promise<any> {
-    const value = await this.connection().get(this.prefix + key);
-
-    if (value === null) {
-      return undefined;
-    }
-
-    return this.deserialize(value);
+    const c = await this.conn();
+    const value = await c.get(this.prefix + key);
+    return value === null ? undefined : this.deserialize(value);
   }
 
-  /**
-   * Retrieve multiple items from the cache
-   *
-   * @param keys - Array of cache keys
-   * @returns Object mapping keys to values
-   *
-   * @example
-   * ```typescript
-   * const data = await store.many(['user:1', 'user:2', 'user:3']);
-   * ```
-   */
   async many(keys: string[]): Promise<Record<string, any>> {
-    if (keys.length === 0) {
-      return {};
-    }
-
-    const prefixedKeys = keys.map((key) => this.prefix + key);
-    const values = await this.connection().mget(...prefixedKeys);
-
+    if (keys.length === 0) return {};
+    const c = await this.conn();
+    const prefixed = keys.map((k) => this.prefix + k);
+    const values = await c.mget(...prefixed);
     const results: Record<string, any> = {};
     for (let i = 0; i < keys.length; i++) {
-      const key = keys[i];
-      if (key !== undefined) {
-        results[key] = values[i] !== null ? this.deserialize(values[i]!) : undefined;
+      const k = keys[i];
+      if (k !== undefined) {
+        results[k] = values[i] !== null ? this.deserialize(values[i]!) : undefined;
       }
     }
-
     return results;
   }
 
-  /**
-   * Store an item in the cache
-   *
-   * @param key - Cache key
-   * @param value - Value to cache
-   * @param seconds - TTL in seconds
-   * @returns True if successful
-   *
-   * @example
-   * ```typescript
-   * await store.put('user:123', { name: 'John' }, 3600);
-   * ```
-   */
   async put(key: string, value: any, seconds: number): Promise<boolean> {
-    const serialized = this.serialize(value);
-    const result = await this.connection().set(this.prefix + key, serialized, { ex: seconds });
-
+    const c = await this.conn();
+    const result = await c.set(this.prefix + key, this.serialize(value), { ex: seconds });
     return result === 'OK';
   }
 
-  /**
-   * Store multiple items in the cache
-   *
-   * Note: Redis MSET doesn't support TTL, so we set TTL separately for each key.
-   *
-   * @param values - Object mapping keys to values
-   * @param seconds - TTL in seconds
-   * @returns True if successful
-   *
-   * @example
-   * ```typescript
-   * await store.putMany({
-   *   'user:1': user1,
-   *   'user:2': user2
-   * }, 3600);
-   * ```
-   */
   async putMany(values: Record<string, any>, seconds: number): Promise<boolean> {
-    if (Object.keys(values).length === 0) {
-      return true;
+    if (Object.keys(values).length === 0) return true;
+    const c = await this.conn();
+    const serialized: Record<string, string> = {};
+    for (const [k, v] of Object.entries(values)) {
+      serialized[this.prefix + k] = this.serialize(v);
     }
-
-    // Store all values (we'll set TTL separately)
-    const serializedValues: Record<string, string> = {};
-    for (const [key, value] of Object.entries(values)) {
-      serializedValues[this.prefix + key] = this.serialize(value);
-    }
-
-    await this.connection().mset(serializedValues);
-
-    // Set TTL for each key (Redis doesn't support TTL in MSET)
+    await c.mset(serialized);
     await Promise.all(
-      Object.keys(values).map((key) => {
-        const serializedValue = serializedValues[this.prefix + key];
-        if (serializedValue !== undefined) {
-          return this.connection().set(this.prefix + key, serializedValue, { ex: seconds });
-        }
-        return Promise.resolve();
-      })
+      Object.keys(values).map((k) => {
+        const sv = serialized[this.prefix + k];
+        return sv !== undefined ? c.set(this.prefix + k, sv, { ex: seconds }) : Promise.resolve();
+      }),
     );
-
     return true;
   }
 
-  /**
-   * Increment a numeric value in the cache
-   *
-   * Uses Redis INCRBY for atomic operations.
-   *
-   * @param key - Cache key
-   * @param value - Amount to increment by (default: 1)
-   * @returns The new value after incrementing
-   *
-   * @example
-   * ```typescript
-   * await store.increment('page:views');      // 1
-   * await store.increment('page:views', 10);  // 11
-   * ```
-   */
-  async increment(key: string, value: number = 1): Promise<number> {
-    if (value === 1) {
-      return this.connection().incr(this.prefix + key);
-    }
-
-    return this.connection().incrby(this.prefix + key, value);
+  async increment(key: string, value: number = 1): Promise<number | boolean> {
+    const c = await this.conn();
+    return value === 1 ? c.incr(this.prefix + key) : c.incrby(this.prefix + key, value);
   }
 
-  /**
-   * Decrement a numeric value in the cache
-   *
-   * Uses Redis DECRBY for atomic operations.
-   *
-   * @param key - Cache key
-   * @param value - Amount to decrement by (default: 1)
-   * @returns The new value after decrementing
-   *
-   * @example
-   * ```typescript
-   * await store.decrement('stock:product:123');     // -1
-   * await store.decrement('stock:product:123', 5);  // -6
-   * ```
-   */
-  async decrement(key: string, value: number = 1): Promise<number> {
-    if (value === 1) {
-      return this.connection().decr(this.prefix + key);
-    }
-
-    return this.connection().decrby(this.prefix + key, value);
+  async decrement(key: string, value: number = 1): Promise<number | boolean> {
+    const c = await this.conn();
+    return value === 1 ? c.decr(this.prefix + key) : c.decrby(this.prefix + key, value);
   }
 
-  /**
-   * Store an item indefinitely
-   *
-   * Note: Redis doesn't have true "forever" storage, so we use a very long TTL (10 years).
-   *
-   * @param key - Cache key
-   * @param value - Value to cache
-   * @returns True if successful
-   *
-   * @example
-   * ```typescript
-   * await store.forever('config:app', { theme: 'dark' });
-   * ```
-   */
   async forever(key: string, value: any): Promise<boolean> {
-    const serialized = this.serialize(value);
-    // Use 10 years as "forever"
-    const result = await this.connection().set(this.prefix + key, serialized, { ex: 315360000 });
-
+    const c = await this.conn();
+    const result = await c.set(this.prefix + key, this.serialize(value), { ex: 315360000 });
     return result === 'OK';
   }
 
-  /**
-   * Remove an item from the cache
-   *
-   * @param key - Cache key
-   * @returns True if the item was removed
-   *
-   * @example
-   * ```typescript
-   * await store.forget('user:123');
-   * ```
-   */
   async forget(key: string): Promise<boolean> {
-    const result = await this.connection().del(this.prefix + key);
-    return result > 0;
+    const c = await this.conn();
+    return (await c.del(this.prefix + key)) > 0;
   }
 
-  /**
-   * Remove all items from the cache
-   *
-   * **Warning:** This flushes the entire Redis database, not just prefixed keys.
-   * Use with caution in shared Redis instances.
-   *
-   * @returns True if successful
-   *
-   * @example
-   * ```typescript
-   * await store.flush(); // Clears entire Redis database
-   * ```
-   */
   async flush(): Promise<boolean> {
-    const result = await this.connection().flushdb();
-    return result === 'OK';
+    const c = await this.conn();
+    return (await c.flushdb()) === 'OK';
   }
 
-  /**
-   * Get the cache key prefix
-   *
-   * @returns The prefix string
-   */
   getPrefix(): string {
     return this.prefix;
   }
 
-  /**
-   * Begin executing a new tags operation
-   *
-   * Creates a TaggedCache instance for cache operations scoped to specific tags.
-   *
-   * @param names - Array of tag names
-   * @returns A TaggedCache instance
-   *
-   * @example
-   * ```typescript
-   * const taggedCache = store.tags(['users', 'premium']);
-   * await taggedCache.put('user:123', user, 3600);
-   * await taggedCache.flush(); // Flush all premium users
-   * ```
-   */
-  tags(names: string[]): TaggedCache {
-    const tagSet = new RedisTagSet(this.connection(), names);
+  async tags(names: string[]): Promise<TaggedCache> {
+    const c = await this.conn();
+    const tagSet = new RedisTagSet(c, names);
     return new TaggedCacheImpl(this, tagSet);
   }
 
-  /**
-   * Serialize a value for storage in Redis
-   *
-   * Converts JavaScript values to JSON strings.
-   *
-   * @param value - Value to serialize
-   * @returns JSON string
-   * @private
-   */
   private serialize(value: any): string {
     return JSON.stringify(value);
   }
 
-  /**
-   * Deserialize a value from Redis
-   *
-   * Converts JSON strings back to JavaScript values.
-   *
-   * @param value - JSON string
-   * @returns Deserialized value
-   * @private
-   */
   private deserialize(value: string): any {
-    try {
-      return JSON.parse(value);
-    } catch {
-      // If parsing fails, return the raw string
-      return value;
-    }
+    try { return JSON.parse(value); }
+    catch { return value; }
   }
 }

@@ -291,7 +291,7 @@ export class CacheService {
    * @returns A TaggedCache instance scoped to the given tags
    * @throws Error if the store doesn't support tagging
    */
-  tags(names: string[]): TaggedCache {
+  async tags(names: string[]): Promise<TaggedCache> {
     if (!this.isTaggableStore(this.store)) {
       throw new Error(
         `Cache store [${this.store.constructor.name}] does not support tagging. ` +

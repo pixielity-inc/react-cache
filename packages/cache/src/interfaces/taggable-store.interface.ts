@@ -29,5 +29,5 @@ export interface TaggableStore extends Store {
    * @param names - Array of tag names
    * @returns A TaggedCache instance
    */
-  tags(names: string[]): TaggedCache;
+  tags(names: string[]): TaggedCache | Promise<TaggedCache>;
 }

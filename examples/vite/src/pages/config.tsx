@@ -10,7 +10,7 @@ export default function ConfigPage() {
 
   const defaultStore = manager.getDefaultDriver();
   const storeNames = manager.getStoreNames();
-  const prefix = manager.getPrefix();
+  const prefix = manager.getGlobalPrefix();
 
   return (
     <DefaultLayout>

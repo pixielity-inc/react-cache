@@ -4,6 +4,9 @@
  * Defines the contract for cache service implementations.
  * All methods return Promises for consistency.
  */
+
+import type { TaggedCache } from './tagged-cache.interface';
+
 export interface CacheServiceInterface {
   /**
    * Get a cache store by name
@@ -115,5 +118,5 @@ export interface CacheServiceInterface {
   /**
    * Get tagged cache instance (Redis only)
    */
-  tags(names: string[]): any; // Returns TaggedCache
+  tags(names: string[]): Promise<TaggedCache>; // Redis only
 }

@@ -113,8 +113,6 @@ export type {
   MemoryStoreConfig,
   RedisStoreConfig,
   NullStoreConfig,
-  RedisConnection,
-  RedisFactory,
   Store,
   TaggableStore,
   TagSet as ITagSet,
@@ -132,4 +130,4 @@ export { defineConfig } from './utils';
 // ============================================================================
 // Constants (DI Tokens)
 // ============================================================================
-export { CACHE_CONFIG, CACHE_SERVICE, CACHE_MANAGER, REDIS_FACTORY } from './constants';
+export { CACHE_CONFIG, CACHE_SERVICE, CACHE_MANAGER } from './constants';

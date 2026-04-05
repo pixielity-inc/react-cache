@@ -19,19 +19,7 @@
  */
 
 import type { TagSet as ITagSet } from '@/interfaces';
-
-/**
- * Redis connection interface (minimal subset needed)
- *
- * This avoids a hard dependency on @abdokouta/redis in the type system.
- */
-interface RedisConnection {
-  get(key: string): Promise<string | null>;
-  set(key: string, value: string): Promise<'OK' | null>;
-  del(...keys: string[]): Promise<number>;
-  zadd(key: string, score: number, member: string): Promise<number>;
-  zremrangebyscore(key: string, min: number, max: number): Promise<number>;
-}
+import type { RedisConnection } from '@abdokouta/react-redis';
 
 /**
  * Redis tag set implementation

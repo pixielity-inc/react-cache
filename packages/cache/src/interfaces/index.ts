@@ -10,8 +10,6 @@ export type { CacheModuleOptions } from './cache-module-options.interface';
 export type { MemoryStoreConfig } from './memory-store-config.interface';
 export type { RedisStoreConfig } from './redis-store-config.interface';
 export type { NullStoreConfig } from './null-store-config.interface';
-export type { RedisConnection } from './redis-connection.interface';
-export type { RedisFactory } from './redis-factory.interface';
 export type { Store } from './store.interface';
 export type { TaggableStore } from './taggable-store.interface';
 export type { TagSet } from './tag-set.interface';
