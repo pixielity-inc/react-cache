@@ -34,3 +34,6 @@ example-app/
 
 # Turbo
 .turbo/
+
+# Local support package (not part of this repo)
+packages/support/
