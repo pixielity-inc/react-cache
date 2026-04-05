@@ -20,39 +20,34 @@
  * @module stores/redis
  */
 
-import type { TaggableStore, TaggedCache, RedisStoreConfig, RedisConnection } from '@/interfaces';
+import type { TaggableStore, TaggedCache, RedisConnection, RedisFactory } from '@/interfaces';
 import { RedisTagSet } from '@/tags/redis-tag-set';
 import { TaggedCache as TaggedCacheImpl } from '@/tags/tagged-cache';
 
 /**
  * Redis cache store implementation
  *
- * Provides a Redis-backed cache with tagging support.
+ * Follows Laravel's pattern: receives a Redis factory and a connection name.
+ * The actual connection is resolved lazily on each operation via
+ * `factory.connection(name)`.
  *
  * @example
  * ```typescript
- * const redis = await redisManager.connection('cache');
- * const store = new RedisStore({
- *   connection: redis,
- *   prefix: 'app_',
- *   ttl: 3600
- * });
+ * const store = new RedisStore(redisFactory, 'cache_', 'cache');
  *
- * // Basic caching
  * await store.put('user:123', { name: 'John' }, 3600);
  * const user = await store.get('user:123');
  *
- * // Tagged caching
  * const taggedCache = store.tags(['users', 'premium']);
  * await taggedCache.put('user:456', { name: 'Jane' }, 3600);
- * await taggedCache.flush(); // Flush all premium users
+ * await taggedCache.flush();
  * ```
  */
 export class RedisStore implements TaggableStore {
   /**
-   * Redis connection
+   * Redis factory for resolving connections by name
    */
-  private readonly redis: RedisConnection;
+  private readonly redis: RedisFactory;
 
   /**
    * Cache key prefix
@@ -60,13 +55,33 @@ export class RedisStore implements TaggableStore {
   private readonly prefix: string;
 
   /**
+   * Connection name to resolve from the factory
+   */
+  private readonly connectionName: string;
+
+  /**
    * Create a new Redis store
    *
-   * @param config - Store configuration
+   * @param redis - Redis factory instance
+   * @param prefix - Cache key prefix
+   * @param connection - Connection name (default: 'default')
    */
-  constructor(config: RedisStoreConfig) {
-    this.redis = config.connection;
-    this.prefix = config.prefix ?? '';
+  constructor(redis: RedisFactory, prefix: string = '', connection: string = 'default') {
+    this.redis = redis;
+    this.prefix = prefix;
+    this.connectionName = connection;
+  }
+
+  /**
+   * Get the Redis connection instance
+   *
+   * Resolves the connection from the factory on each call,
+   * matching Laravel's `$this->connection()` pattern.
+   *
+   * @returns The Redis connection
+   */
+  connection(): RedisConnection {
+    return this.redis.connection(this.connectionName);
   }
 
   /**
@@ -81,7 +96,7 @@ export class RedisStore implements TaggableStore {
    * ```
    */
   async get(key: string): Promise<any> {
-    const value = await this.redis.get(this.prefix + key);
+    const value = await this.connection().get(this.prefix + key);
 
     if (value === null) {
       return undefined;
@@ -107,7 +122,7 @@ export class RedisStore implements TaggableStore {
     }
 
     const prefixedKeys = keys.map((key) => this.prefix + key);
-    const values = await this.redis.mget(...prefixedKeys);
+    const values = await this.connection().mget(...prefixedKeys);
 
     const results: Record<string, any> = {};
     for (let i = 0; i < keys.length; i++) {
@@ -135,7 +150,7 @@ export class RedisStore implements TaggableStore {
    */
   async put(key: string, value: any, seconds: number): Promise<boolean> {
     const serialized = this.serialize(value);
-    const result = await this.redis.set(this.prefix + key, serialized, { ex: seconds });
+    const result = await this.connection().set(this.prefix + key, serialized, { ex: seconds });
 
     return result === 'OK';
   }
@@ -168,14 +183,14 @@ export class RedisStore implements TaggableStore {
       serializedValues[this.prefix + key] = this.serialize(value);
     }
 
-    await this.redis.mset(serializedValues);
+    await this.connection().mset(serializedValues);
 
     // Set TTL for each key (Redis doesn't support TTL in MSET)
     await Promise.all(
       Object.keys(values).map((key) => {
         const serializedValue = serializedValues[this.prefix + key];
         if (serializedValue !== undefined) {
-          return this.redis.set(this.prefix + key, serializedValue, { ex: seconds });
+          return this.connection().set(this.prefix + key, serializedValue, { ex: seconds });
         }
         return Promise.resolve();
       })
@@ -201,10 +216,10 @@ export class RedisStore implements TaggableStore {
    */
   async increment(key: string, value: number = 1): Promise<number> {
     if (value === 1) {
-      return this.redis.incr(this.prefix + key);
+      return this.connection().incr(this.prefix + key);
     }
 
-    return this.redis.incrby(this.prefix + key, value);
+    return this.connection().incrby(this.prefix + key, value);
   }
 
   /**
@@ -224,10 +239,10 @@ export class RedisStore implements TaggableStore {
    */
   async decrement(key: string, value: number = 1): Promise<number> {
     if (value === 1) {
-      return this.redis.decr(this.prefix + key);
+      return this.connection().decr(this.prefix + key);
     }
 
-    return this.redis.decrby(this.prefix + key, value);
+    return this.connection().decrby(this.prefix + key, value);
   }
 
   /**
@@ -247,7 +262,7 @@ export class RedisStore implements TaggableStore {
   async forever(key: string, value: any): Promise<boolean> {
     const serialized = this.serialize(value);
     // Use 10 years as "forever"
-    const result = await this.redis.set(this.prefix + key, serialized, { ex: 315360000 });
+    const result = await this.connection().set(this.prefix + key, serialized, { ex: 315360000 });
 
     return result === 'OK';
   }
@@ -264,7 +279,7 @@ export class RedisStore implements TaggableStore {
    * ```
    */
   async forget(key: string): Promise<boolean> {
-    const result = await this.redis.del(this.prefix + key);
+    const result = await this.connection().del(this.prefix + key);
     return result > 0;
   }
 
@@ -282,7 +297,7 @@ export class RedisStore implements TaggableStore {
    * ```
    */
   async flush(): Promise<boolean> {
-    const result = await this.redis.flushdb();
+    const result = await this.connection().flushdb();
     return result === 'OK';
   }
 
@@ -311,7 +326,7 @@ export class RedisStore implements TaggableStore {
    * ```
    */
   tags(names: string[]): TaggedCache {
-    const tagSet = new RedisTagSet(this.redis, names);
+    const tagSet = new RedisTagSet(this.connection(), names);
     return new TaggedCacheImpl(this, tagSet);
   }
 

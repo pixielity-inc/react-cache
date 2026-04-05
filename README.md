@@ -117,26 +117,20 @@ export function UserList() {
 
 ```typescript
 // Full configuration
-Container
-  .configure()
+Container.configure()
   .withModule(AppModule)
   .withLogLevel("debug")
   .withDefaultScope("Singleton")
   .build();
 
 // With config object
-Container
-  .configure()
+Container.configure()
   .withModule(AppModule)
   .withConfig({ logLevel: "debug", defaultScope: "Singleton" })
   .build();
 
 // With defaults
-Container
-  .configure()
-  .withModule(AppModule)
-  .withDefaults()
-  .build();
+Container.configure().withModule(AppModule).withDefaults().build();
 ```
 
 ## 🌍 Global Modules
@@ -169,32 +163,32 @@ export class ConfigModule {
 
 ## 📋 Provider Types
 
-| Type | Example |
-|------|---------|
-| Class | `UserService` or `{ provide: USER, useClass: UserService }` |
-| Value | `{ provide: API_URL, useValue: "https://api.example.com" }` |
-| Factory | `{ provide: CONNECTION, useFactory: (ctx) => () => createConnection() }` |
-| Async Factory | `{ provide: DB, useAsyncFactory: () => async () => await connect() }` |
-| Alias | `{ provide: "Logger", useExisting: LoggerService }` |
+| Type          | Example                                                                  |
+| ------------- | ------------------------------------------------------------------------ |
+| Class         | `UserService` or `{ provide: USER, useClass: UserService }`              |
+| Value         | `{ provide: API_URL, useValue: "https://api.example.com" }`              |
+| Factory       | `{ provide: CONNECTION, useFactory: (ctx) => () => createConnection() }` |
+| Async Factory | `{ provide: DB, useAsyncFactory: () => async () => await connect() }`    |
+| Alias         | `{ provide: "Logger", useExisting: LoggerService }`                      |
 
 ## 🎣 React Hooks
 
-| Hook | Description |
-|------|-------------|
-| `useInject<T>(token)` | Inject a service |
-| `useContainer()` | Get container context |
-| `useModule(module)` | Get module container |
+| Hook                  | Description           |
+| --------------------- | --------------------- |
+| `useInject<T>(token)` | Inject a service      |
+| `useContainer()`      | Get container context |
+| `useModule(module)`   | Get module container  |
 
 ## 🔧 Decorators
 
-| Decorator | Description |
-|-----------|-------------|
-| `@Module()` | Define a module |
-| `@Global()` | Make module global |
-| `@Injectable()` | Mark class as injectable |
-| `@Inject(token)` | Inject dependency |
-| `@MultiInject(token)` | Inject all with token |
-| `@Optional()` | Optional dependency |
+| Decorator             | Description              |
+| --------------------- | ------------------------ |
+| `@Module()`           | Define a module          |
+| `@Global()`           | Make module global       |
+| `@Injectable()`       | Mark class as injectable |
+| `@Inject(token)`      | Inject dependency        |
+| `@MultiInject(token)` | Inject all with token    |
+| `@Optional()`         | Optional dependency      |
 
 ## 📚 Documentation
 

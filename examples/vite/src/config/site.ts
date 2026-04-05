@@ -1,20 +1,20 @@
 export type SiteConfig = typeof siteConfig;
 
 export const siteConfig = {
-  name: "@abdokouta/react-di",
+  name: "@abdokouta/react-cache",
   description:
-    "Dependency injection container for React with NestJS-style modules",
+    "Laravel-inspired caching system with multiple drivers for React",
   navItems: [
     {
       label: "Home",
       href: "/",
     },
     {
-      label: "Basic Demo",
-      href: "/container",
+      label: "Configuration",
+      href: "/config",
     },
     {
-      label: "Advanced Patterns",
+      label: "Advanced",
       href: "/advanced",
     },
   ],
@@ -24,16 +24,19 @@ export const siteConfig = {
       href: "/",
     },
     {
-      label: "Basic Demo",
-      href: "/container",
+      label: "Configuration",
+      href: "/config",
     },
     {
-      label: "Advanced Patterns",
+      label: "Advanced",
       href: "/advanced",
     },
   ],
   links: {
-    github: "https://github.com/abdokouta/react-di",
-    docs: "https://github.com/abdokouta/react-di#readme",
+    github: "https://github.com/abdokouta/cache",
+    docs: "https://github.com/abdokouta/cache#readme",
+    twitter: "https://twitter.com/abdokouta",
+    discord: "https://discord.gg/abdokouta",
+    sponsor: "https://github.com/sponsors/abdokouta",
   },
 };

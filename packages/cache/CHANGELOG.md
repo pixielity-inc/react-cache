@@ -1,10 +1,10 @@
-# @abdokouta/cache
+# @abdokouta/react-cache
 
 ## 1.0.0
 
 ### Major Features
 
-- 🎉 Initial release of @abdokouta/cache
+- 🎉 Initial release of @abdokouta/react-cache
 - 🚀 Multiple cache drivers: Memory, Redis (Upstash), Null
 - 🏷️ Cache tagging support for Redis
 - 📦 Laravel-inspired Repository pattern

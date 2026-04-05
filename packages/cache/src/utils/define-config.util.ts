@@ -3,7 +3,7 @@
  *
  * Helper function to define cache configuration with type safety.
  *
- * @module @abdokouta/cache
+ * @module @abdokouta/react-cache
  */
 
 import type { CacheModuleOptions } from '../interfaces';
@@ -20,7 +20,7 @@ import type { CacheModuleOptions } from '../interfaces';
  * @example
  * ```typescript
  * // cache.config.ts
- * import { defineConfig } from '@abdokouta/cache';
+ * import { defineConfig } from '@abdokouta/react-cache';
  *
  * export default defineConfig({
  *   default: 'memory',

@@ -1,49 +1,97 @@
-# @abdokouta/cache
+<p align="center">
+  <img src=".github/assets/banner.svg" alt="@abdokouta/react-cache" width="100%" />
+</p>
 
-Laravel-inspired caching system for Refine with multiple drivers and cache
-tagging support.
+<p align="center">
+  <a href="https://www.npmjs.com/package/@abdokouta/react-cache"><img src="https://img.shields.io/npm/v/@abdokouta/react-cache.svg?style=flat-square" alt="npm version" /></a>
+  <a href="https://www.npmjs.com/package/@abdokouta/react-cache"><img src="https://img.shields.io/npm/dm/@abdokouta/react-cache.svg?style=flat-square" alt="npm downloads" /></a>
+  <a href="https://github.com/abdokouta/cache/blob/main/LICENSE"><img src="https://img.shields.io/npm/l/@abdokouta/react-cache.svg?style=flat-square" alt="license" /></a>
+  <a href="https://github.com/abdokouta/cache"><img src="https://img.shields.io/github/stars/abdokouta/cache?style=flat-square" alt="stars" /></a>
+</p>
+
+<p align="center">
+  Laravel-inspired caching system with multiple drivers for React applications.<br/>
+  Built on top of <a href="https://www.npmjs.com/package/@abdokouta/react-di">@abdokouta/react-di</a> for seamless dependency injection.
+</p>
+
+---
+
+## Table of Contents
+
+- [Features](#features)
+- [Installation](#installation)
+- [Quick Start](#quick-start)
+- [Configuration](#configuration)
+  - [Basic Configuration](#basic-configuration)
+  - [Using defineConfig](#using-defineconfig)
+  - [Environment Variables](#environment-variables)
+- [Cache Drivers](#cache-drivers)
+  - [Memory Store](#memory-store)
+  - [Redis Store](#redis-store)
+  - [Null Store](#null-store)
+- [Usage](#usage)
+  - [Basic Operations](#basic-operations)
+  - [Remember Pattern](#remember-pattern)
+  - [Multiple Stores](#multiple-stores)
+  - [Increment & Decrement](#increment--decrement)
+  - [Cache Tagging](#cache-tagging)
+- [React Hooks](#react-hooks)
+  - [useCache](#usecache)
+  - [useCachedQuery](#usecachedquery)
+- [API Reference](#api-reference)
+  - [CacheService](#cacheservice)
+  - [Store Interface](#store-interface)
+  - [TaggedCache](#taggedcache)
+- [Custom Stores](#custom-stores)
+- [TypeScript](#typescript)
+- [Laravel Comparison](#laravel-comparison)
+- [Requirements](#requirements)
+- [License](#license)
+
+---
 
 ## Features
 
-- **Multiple Drivers**: Memory, Redis (Upstash), and Null stores
-- **Cache Tagging**: Group and invalidate related cache items (Redis only)
-- **Repository Pattern**: Laravel-style high-level API with `remember()`,
-  `rememberForever()`, etc.
-- **React Hooks**: `useCache()` and `useCachedQuery()` for easy integration
-- **TypeScript**: Full type safety with comprehensive JSDoc documentation
-- **Browser Compatible**: Works in browsers using Upstash Redis HTTP API
+- **Multiple Drivers** — Memory, Redis, and Null stores out of the box
+- **Laravel-Inspired API** — `remember`, `rememberForever`, `pull`, `tags`, and more
+- **Cache Tagging** — Group related cache entries and flush them together (Redis)
+- **React Hooks** — `useCache()` and `useCachedQuery()` for component-level caching
+- **Dependency Injection** — First-class DI support via `@abdokouta/react-di`
+- **Type-Safe Configuration** — `defineConfig()` helper with full autocomplete
+- **TTL Support** — Per-operation and per-store default TTL
+- **Key Prefixing** — Global and per-store prefixes to avoid collisions
+- **LRU Eviction** — Memory store supports max size with automatic eviction
+- **Lazy Initialization** — Stores are created on first use
+- **Zero Config** — Works with sensible defaults, customize when needed
+
+---
 
 ## Installation
 
 ```bash
-npm install @abdokouta/cache
-# or
-yarn add @abdokouta/cache
-# or
-pnpm add @abdokouta/cache
+# npm
+npm install @abdokouta/react-cache @abdokouta/react-di
+
+# pnpm
+pnpm add @abdokouta/react-cache @abdokouta/react-di
+
+# yarn
+yarn add @abdokouta/react-cache @abdokouta/react-di
 ```
 
-### Optional Dependencies
-
-For Redis support:
+For Redis support, also install:
 
 ```bash
-npm install @abdokouta/redis @upstash/redis
+pnpm add @abdokouta/react-redis
 ```
 
-For React hooks:
-
-```bash
-npm install react
-```
+---
 
 ## Quick Start
 
-### 1. Configure the Module
-
 ```typescript
-import { Module } from '@abdokouta/container';
-import { CacheModule } from '@abdokouta/cache';
+import { Module } from '@abdokouta/react-di';
+import { CacheModule } from '@abdokouta/react-cache';
 
 @Module({
   imports: [
@@ -53,303 +101,345 @@ import { CacheModule } from '@abdokouta/cache';
         memory: {
           driver: 'memory',
           maxSize: 1000,
-          ttl: 300, // 5 minutes
-        },
-        null: {
-          driver: 'null',
+          ttl: 300,
         },
       },
-      prefix: 'myapp_',
     }),
   ],
 })
 export class AppModule {}
 ```
 
-### 2. Use in Services
+Then use it anywhere via DI or hooks:
 
 ```typescript
-import { Injectable, Inject } from '@abdokouta/container';
-import { CacheService } from '@abdokouta/cache';
-
-@Injectable()
-export class UserService {
-  constructor(@Inject(CacheService) private cache: CacheService) {}
-
-  async getUser(id: string) {
-    // Remember pattern: get from cache or execute callback
-    return this.cache.remember(`user:${id}`, 3600, async () => {
-      return await this.database.users.findById(id);
-    });
-  }
-
-  async invalidateUser(id: string) {
-    await this.cache.forget(`user:${id}`);
-  }
-}
-```
-
-### 3. Use in React Components
-
-```typescript
-import { useCache } from '@abdokouta/cache';
+import { useCache } from '@abdokouta/react-cache';
 
 function UserProfile({ userId }: { userId: string }) {
   const cache = useCache();
-  const [user, setUser] = useState(null);
 
   useEffect(() => {
-    async function loadUser() {
-      const cached = await cache.get(`user:${userId}`);
-
-      if (cached) {
-        setUser(cached);
-      } else {
-        const user = await fetchUser(userId);
-        await cache.put(`user:${userId}`, user, 3600);
-        setUser(user);
-      }
+    async function load() {
+      const user = await cache.remember(`user:${userId}`, 3600, () =>
+        fetch(`/api/users/${userId}`).then((r) => r.json())
+      );
+      setUser(user);
     }
-
-    loadUser();
+    load();
   }, [userId]);
 
-  return <div>{user?.name}</div>;
+  // ...
 }
 ```
+
+---
+
+## Configuration
+
+### Basic Configuration
+
+The configuration object follows the same structure as Laravel's `config/cache.php`:
+
+```typescript
+import { CacheModule } from '@abdokouta/react-cache';
+
+CacheModule.forRoot({
+  // Default store used when none is specified
+  default: 'memory',
+
+  // All available stores
+  stores: {
+    memory: {
+      driver: 'memory',
+      maxSize: 1000,
+      ttl: 300,        // 5 minutes
+      prefix: 'mem_',
+    },
+    redis: {
+      driver: 'redis',
+      connection: redisClient,
+      prefix: 'cache_',
+      ttl: 3600,       // 1 hour
+    },
+    null: {
+      driver: 'null',
+    },
+  },
+
+  // Global key prefix (applied to all stores)
+  prefix: 'myapp_',
+});
+```
+
+### Using defineConfig
+
+For type-safe configuration with IDE autocomplete, use the `defineConfig` helper:
+
+```typescript
+// cache.config.ts
+import { defineConfig } from '@abdokouta/react-cache';
+
+export default defineConfig({
+  default: 'memory',
+  stores: {
+    memory: {
+      driver: 'memory',
+      maxSize: 1000,
+      ttl: 300,
+    },
+    redis: {
+      driver: 'redis',
+      connection: redisClient,
+      prefix: 'cache_',
+      ttl: 3600,
+    },
+  },
+  prefix: 'app_',
+});
+```
+
+### Environment Variables
+
+The included `config/cache.config.ts` supports Vite environment variables:
+
+| Variable | Description | Default |
+|---|---|---|
+| `VITE_CACHE_DRIVER` | Default cache driver | `'memory'` |
+| `CACHE_PREFIX` | Global key prefix | `'app_'` |
+| `VITE_CACHE_MEMORY_MAX_SIZE` | Memory store max entries | `1000` |
+| `VITE_CACHE_MEMORY_TTL` | Memory store TTL (seconds) | `300` |
+| `VITE_REDIS_CACHE_CONNECTION` | Redis connection name | `'cache'` |
+| `VITE_CACHE_REDIS_PREFIX` | Redis key prefix | `'cache_'` |
+| `VITE_CACHE_REDIS_TTL` | Redis TTL (seconds) | `3600` |
+
+---
 
 ## Cache Drivers
 
 ### Memory Store
 
-In-memory cache with TTL and LRU eviction.
+Fast in-memory cache using JavaScript `Map`. Data is lost on page refresh or process restart.
 
 ```typescript
-CacheModule.forRoot({
-  default: 'memory',
-  stores: {
-    memory: {
-      driver: 'memory',
-      maxSize: 1000, // Max items (LRU eviction)
-      ttl: 300, // Default TTL in seconds
-      prefix: 'cache_',
-    },
-  },
-});
+{
+  driver: 'memory',
+  maxSize: 1000,   // Max entries before LRU eviction (optional)
+  ttl: 300,        // Default TTL in seconds (optional)
+  prefix: 'mem_',  // Key prefix (optional)
+}
 ```
 
-**Use Cases:**
+| Option | Type | Default | Description |
+|---|---|---|---|
+| `driver` | `'memory'` | — | Required driver identifier |
+| `maxSize` | `number` | `undefined` | Max entries (unlimited if omitted) |
+| `ttl` | `number` | `300` | Default TTL in seconds |
+| `prefix` | `string` | `''` | Key prefix |
 
-- Development/testing
-- Client-side caching in browsers
-- Temporary session data
-- When persistence is not required
+Best for: development, client-side caching, temporary data.
 
 ### Redis Store
 
-Redis-backed cache with tagging support (requires @abdokouta/redis).
+Persistent cache backed by Redis. Supports tagging, distributed caching, and atomic operations.
 
 ```typescript
-import { RedisModule } from '@abdokouta/redis';
-
-@Module({
-  imports: [
-    // Configure Redis first
-    RedisModule.forRoot({
-      default: 'cache',
-      connections: {
-        cache: {
-          url: process.env.UPSTASH_REDIS_REST_URL!,
-          token: process.env.UPSTASH_REDIS_REST_TOKEN!,
-        },
-      },
-    }),
-
-    // Then configure Cache
-    CacheModule.forRoot({
-      default: 'redis',
-      stores: {
-        redis: {
-          driver: 'redis',
-          connection: 'cache',
-          prefix: 'app_',
-          ttl: 3600,
-        },
-      },
-    }),
-  ],
-})
+{
+  driver: 'redis',
+  connection: redisClient,  // RedisConnection instance
+  prefix: 'cache_',         // Key prefix (optional)
+  ttl: 3600,                // Default TTL in seconds (optional)
+}
 ```
 
-**Use Cases:**
+| Option | Type | Default | Description |
+|---|---|---|---|
+| `driver` | `'redis'` | — | Required driver identifier |
+| `connection` | `RedisConnection` | — | Redis client instance |
+| `ttl` | `number` | `300` | Default TTL in seconds |
+| `prefix` | `string` | `''` | Key prefix |
 
-- Production applications
-- Distributed systems
-- When cache persistence is required
-- When cache tagging is needed
+Best for: production, distributed systems, when persistence or tagging is needed.
 
 ### Null Store
 
-No-op cache that doesn't store anything.
+No-op store that never caches anything. All writes succeed, all reads return `undefined`.
 
 ```typescript
-CacheModule.forRoot({
-  default: 'null',
-  stores: {
-    null: {
-      driver: 'null',
-    },
-  },
-});
+{
+  driver: 'null',
+}
 ```
 
-**Use Cases:**
+Best for: testing, disabling cache, benchmarking without cache overhead.
 
-- Disabling cache in testing
-- Development environments
-- Feature flags to disable caching
+---
 
-## API Reference
+## Usage
 
-### CacheService
-
-Main service for cache operations.
-
-#### Basic Operations
+### Basic Operations
 
 ```typescript
-// Get
-const value = await cache.get('key');
-const valueWithDefault = await cache.get('key', 'default');
+const cache = useCache();
 
-// Put
-await cache.put('key', 'value', 3600); // TTL in seconds
+// Store a value (TTL in seconds)
+await cache.put('user:123', { name: 'John' }, 3600);
 
-// Put many
-await cache.putMany(
-  {
-    key1: 'value1',
-    key2: 'value2',
-  },
-  3600
-);
+// Retrieve a value
+const user = await cache.get('user:123');
 
-// Forever (no expiration)
-await cache.forever('key', 'value');
-
-// Forget
-await cache.forget('key');
-
-// Flush all
-await cache.flush();
+// Retrieve with a default
+const name = await cache.get('user:name', 'Guest');
 
 // Check existence
-const exists = await cache.has('key');
+if (await cache.has('user:123')) {
+  // ...
+}
+
+// Store multiple values
+await cache.putMany({ 'user:1': user1, 'user:2': user2 }, 3600);
+
+// Retrieve multiple values
+const users = await cache.many(['user:1', 'user:2']);
+
+// Store only if key doesn't exist
+const added = await cache.add('user:123', user, 3600);
+
+// Store indefinitely (no expiration)
+await cache.forever('config:app', appConfig);
+
+// Remove a value
+await cache.forget('user:123');
+
+// Get and remove in one call
+const token = await cache.pull('auth:token');
+
+// Clear everything
+await cache.flush();
 ```
 
-#### Remember Pattern
+### Remember Pattern
 
-Get from cache or execute callback and store result:
+The `remember` method retrieves from cache or executes a callback and stores the result — the most common caching pattern:
 
 ```typescript
+// Cache for 1 hour, fetch from DB on miss
 const user = await cache.remember('user:123', 3600, async () => {
   return await database.users.findById(123);
 });
 
-// Forever variant
+// Cache forever
 const config = await cache.rememberForever('app:config', async () => {
   return await loadConfigFromFile();
 });
 ```
 
-#### Increment/Decrement
+### Multiple Stores
+
+Switch between stores at runtime:
 
 ```typescript
-await cache.increment('page:views'); // +1
-await cache.increment('page:views', 10); // +10
-await cache.decrement('stock:item:123'); // -1
-await cache.decrement('stock:item:123', 5); // -5
-```
+const cache = useCache();
 
-#### Pull (Get and Delete)
+// Use default store
+await cache.put('key', 'value', 3600);
 
-```typescript
-const token = await cache.pull('auth:token:abc123');
-// Token is now removed from cache
-```
+// Use a specific store
+const redisCache = cache.store('redis');
+await redisCache.put('key', 'value', 3600);
 
-#### Multiple Stores
-
-```typescript
-// Use specific store
 const memoryCache = cache.store('memory');
 await memoryCache.put('key', 'value', 300);
 
-// Use default store
-await cache.put('key', 'value', 300);
+// Or via the hook
+const redis = useCache('redis');
 ```
 
-### Cache Tagging (Redis Only)
+### Increment & Decrement
 
-Group related cache items and invalidate them together:
+Atomic counter operations:
 
 ```typescript
+await cache.increment('page:views');        // 1
+await cache.increment('page:views', 10);    // 11
+await cache.decrement('stock:item:42');      // -1
+await cache.decrement('stock:item:42', 5);  // -6
+```
+
+### Cache Tagging
+
+Group related cache entries with tags for bulk invalidation. Tagging is only available with the Redis store.
+
+```typescript
+const cache = useCache('redis');
+
 // Store with tags
 await cache.tags(['users', 'premium']).put('user:123', user, 3600);
-await cache.tags(['users', 'premium']).put('user:456', user2, 3600);
+await cache.tags(['users']).put('user:456', user2, 3600);
+await cache.tags(['posts']).put('post:1', post, 3600);
 
-// Retrieve with tags
+// Retrieve tagged items
 const user = await cache.tags(['users', 'premium']).get('user:123');
 
-// Flush all items with specific tags
-await cache.tags(['premium']).flush(); // Invalidates all premium users
+// Flush all entries tagged with 'users'
+await cache.tags(['users']).flush();
+// user:123 and user:456 are now gone, post:1 is untouched
 
-// Multiple operations
-const taggedCache = cache.tags(['users', 'posts']);
-await taggedCache.put('user:1:posts', posts, 3600);
-await taggedCache.increment('user:1:post_count');
-await taggedCache.flush(); // Flush all user posts
+// Flush specific tag combination
+await cache.tags(['users', 'premium']).flush();
 ```
 
-### React Hooks
+How tagging works under the hood:
+1. Each tag gets a unique namespace ID stored in Redis
+2. Cache keys are prefixed with the combined namespace (e.g., `abc123|def456:user:123`)
+3. Flushing a tag regenerates its namespace ID, making all old keys inaccessible
+4. Expired entries are tracked in Redis sorted sets for cleanup
 
-#### useCache
+---
 
-Access cache service in React components:
+## React Hooks
+
+### useCache
+
+Access the cache service from any React component:
 
 ```typescript
-import { useCache } from '@abdokouta/cache';
+import { useCache } from '@abdokouta/react-cache';
 
-function MyComponent() {
+function Dashboard() {
   const cache = useCache();
 
-  // Use default store
-  const handleCache = async () => {
-    await cache.put('key', 'value', 3600);
+  const loadStats = async () => {
+    return cache.remember('dashboard:stats', 600, async () => {
+      const res = await fetch('/api/stats');
+      return res.json();
+    });
   };
 
-  // Use specific store
-  const memoryCache = useCache('memory');
+  // ...
+}
 
-  return <button onClick={handleCache}>Cache Data</button>;
+// Use a specific store
+function Widget() {
+  const memoryCache = useCache('memory');
+  // ...
 }
 ```
 
-#### useCachedQuery
+### useCachedQuery
 
-Automatic caching of async query results:
+A React Query-like hook that caches async query results:
 
 ```typescript
-import { useCachedQuery } from '@abdokouta/cache';
+import { useCachedQuery } from '@abdokouta/react-cache';
 
 function UserProfile({ userId }: { userId: string }) {
-  const { data: user, isLoading, error, refetch, invalidate } = useCachedQuery({
+  const { data, isLoading, error, refetch, invalidate } = useCachedQuery({
     key: `user:${userId}`,
     queryFn: async () => {
-      const response = await fetch(`/api/users/${userId}`);
-      return response.json();
+      const res = await fetch(`/api/users/${userId}`);
+      return res.json();
     },
-    ttl: 3600, // Cache for 1 hour
+    ttl: 3600,
   });
 
   if (isLoading) return <div>Loading...</div>;
@@ -357,7 +447,7 @@ function UserProfile({ userId }: { userId: string }) {
 
   return (
     <div>
-      <h1>{user.name}</h1>
+      <h1>{data.name}</h1>
       <button onClick={refetch}>Refresh</button>
       <button onClick={invalidate}>Clear Cache & Refresh</button>
     </div>
@@ -365,250 +455,181 @@ function UserProfile({ userId }: { userId: string }) {
 }
 ```
 
-**Options:**
+#### Options
 
-- `key`: Cache key
-- `queryFn`: Function to execute on cache miss
-- `ttl`: TTL in seconds (default: 300)
-- `storeName`: Store name (default: default store)
-- `enabled`: Enable/disable query (default: true)
-- `refetchOnMount`: Refetch on mount (default: false)
+| Option | Type | Default | Description |
+|---|---|---|---|
+| `key` | `string` | — | Cache key (required) |
+| `queryFn` | `() => Promise<T>` | — | Async function to fetch data (required) |
+| `ttl` | `number` | `300` | TTL in seconds |
+| `storeName` | `string` | default store | Which store to use |
+| `enabled` | `boolean` | `true` | Enable/disable the query |
+| `refetchOnMount` | `boolean` | `false` | Force refetch on mount |
+| `refetchInterval` | `number` | — | Auto-refetch interval (ms) |
 
-**Result:**
+#### Return Value
 
-- `data`: Query data
-- `isLoading`: Loading state
-- `error`: Error state
-- `refetch()`: Refetch from cache or query
-- `invalidate()`: Clear cache and refetch
+| Property | Type | Description |
+|---|---|---|
+| `data` | `T \| undefined` | The cached/fetched data |
+| `isLoading` | `boolean` | Loading state |
+| `error` | `Error \| null` | Error state |
+| `refetch` | `() => Promise<void>` | Re-run query (uses cache) |
+| `invalidate` | `() => Promise<void>` | Clear cache and re-run query |
 
-## Configuration
+---
 
-### CacheModuleOptions
+## API Reference
+
+### CacheService
+
+The main service providing all cache operations.
+
+| Method | Signature | Description |
+|---|---|---|
+| `get` | `get<T>(key, defaultValue?): Promise<T \| undefined>` | Retrieve a cached value |
+| `many` | `many<T>(keys): Promise<Record<string, T>>` | Retrieve multiple values |
+| `put` | `put<T>(key, value, ttl?): Promise<boolean>` | Store a value |
+| `putMany` | `putMany<T>(values, ttl?): Promise<boolean>` | Store multiple values |
+| `add` | `add<T>(key, value, ttl?): Promise<boolean>` | Store only if key doesn't exist |
+| `has` | `has(key): Promise<boolean>` | Check if key exists |
+| `increment` | `increment(key, value?): Promise<number>` | Increment a numeric value |
+| `decrement` | `decrement(key, value?): Promise<number>` | Decrement a numeric value |
+| `forever` | `forever<T>(key, value): Promise<boolean>` | Store indefinitely |
+| `remember` | `remember<T>(key, ttl, callback): Promise<T>` | Get or compute and store |
+| `rememberForever` | `rememberForever<T>(key, callback): Promise<T>` | Get or compute and store forever |
+| `pull` | `pull<T>(key, defaultValue?): Promise<T \| undefined>` | Get and remove |
+| `forget` | `forget(key): Promise<boolean>` | Remove a value |
+| `flush` | `flush(): Promise<boolean>` | Clear all values |
+| `tags` | `tags(names): TaggedCache` | Get tagged cache (Redis only) |
+| `store` | `store(name?): CacheService` | Switch to a different store |
+| `getDefaultStoreName` | `getDefaultStoreName(): string` | Get default store name |
+| `getStoreNames` | `getStoreNames(): string[]` | List all configured stores |
+| `hasStore` | `hasStore(name): boolean` | Check if store is configured |
+| `getPrefix` | `getPrefix(): string` | Get global key prefix |
+
+### Store Interface
+
+All stores implement this interface:
 
 ```typescript
-interface CacheModuleOptions {
-  /** Default store name */
-  default: string;
-
-  /** Store configurations */
-  stores: Record<string, StoreConfig>;
-
-  /** Global cache key prefix */
-  prefix?: string;
+interface Store {
+  get(key: string): Promise<any>;
+  many(keys: string[]): Promise<Record<string, any>>;
+  put(key: string, value: any, seconds: number): Promise<boolean>;
+  putMany(values: Record<string, any>, seconds: number): Promise<boolean>;
+  increment(key: string, value?: number): Promise<number | boolean>;
+  decrement(key: string, value?: number): Promise<number | boolean>;
+  forever(key: string, value: any): Promise<boolean>;
+  forget(key: string): Promise<boolean>;
+  flush(): Promise<boolean>;
+  getPrefix(): string;
 }
 ```
 
-### StoreConfig
+### TaggedCache
+
+Returned by `cache.tags([...])`. Same API as Store with tag-scoped keys:
 
 ```typescript
-// Memory Store
-interface MemoryStoreConfig {
-  driver: 'memory';
-  maxSize?: number; // Max items (LRU eviction)
-  ttl?: number; // Default TTL in seconds
-  prefix?: string; // Store-specific prefix
-}
-
-// Redis Store
-interface RedisStoreConfig {
-  driver: 'redis';
-  connection?: string; // Redis connection name
-  ttl?: number; // Default TTL in seconds
-  prefix?: string; // Store-specific prefix
-}
-
-// Null Store
-interface NullStoreConfig {
-  driver: 'null';
-  prefix?: string;
+interface TaggedCache {
+  get<T>(key: string): Promise<T | undefined>;
+  many(keys: string[]): Promise<Record<string, any>>;
+  put(key: string, value: any, ttl?: number): Promise<boolean>;
+  putMany(values: Record<string, any>, ttl?: number): Promise<boolean>;
+  increment(key: string, value?: number): Promise<number | boolean>;
+  decrement(key: string, value?: number): Promise<number | boolean>;
+  forever(key: string, value: any): Promise<boolean>;
+  forget(key: string): Promise<boolean>;
+  flush(): Promise<boolean>;
+  getTags(): TagSet;
 }
 ```
 
-## Advanced Usage
+---
 
-### Custom Store Selection
+## Custom Stores
+
+Implement the `Store` interface to create your own cache driver:
 
 ```typescript
-@Injectable()
-export class StatsService {
-  constructor(@Inject(CacheService) private cache: CacheService) {}
+import type { Store } from '@abdokouta/react-cache';
 
-  async getStats() {
-    // Use memory cache for fast access
-    const memoryCache = this.cache.store('memory');
-    return memoryCache.remember('stats', 60, async () => {
-      return await this.calculateStats();
-    });
+export class LocalStorageStore implements Store {
+  async get(key: string): Promise<any> {
+    const item = localStorage.getItem(key);
+    return item ? JSON.parse(item) : undefined;
   }
 
-  async getPersistentData() {
-    // Use Redis for persistent cache
-    const redisCache = this.cache.store('redis');
-    return redisCache.get('persistent:data');
-  }
-}
-```
-
-### Conditional Caching
-
-```typescript
-const cacheEnabled = process.env.CACHE_ENABLED === 'true';
-
-CacheModule.forRoot({
-  default: cacheEnabled ? 'memory' : 'null',
-  stores: {
-    memory: { driver: 'memory' },
-    null: { driver: 'null' },
-  },
-});
-```
-
-### Cache Invalidation Patterns
-
-```typescript
-// Single item
-await cache.forget('user:123');
-
-// Multiple items
-await cache.forget('user:123');
-await cache.forget('user:123:posts');
-await cache.forget('user:123:comments');
-
-// Tagged items (Redis only)
-await cache.tags(['users']).flush();
-
-// All cache
-await cache.flush();
-```
-
-## Best Practices
-
-1. **Use Descriptive Keys**: Use namespaced keys like `user:123`,
-   `post:456:comments`
-2. **Set Appropriate TTLs**: Balance freshness vs. performance
-3. **Use Tags for Related Data**: Group related items for easy invalidation
-   (Redis)
-4. **Handle Cache Misses**: Always provide fallback logic
-5. **Monitor Cache Size**: Set `maxSize` for memory stores to prevent memory
-   leaks
-6. **Use Remember Pattern**: Simplifies cache-or-compute logic
-7. **Invalidate on Updates**: Clear cache when data changes
-
-## Examples
-
-### User Profile Caching
-
-```typescript
-@Injectable()
-export class UserService {
-  constructor(
-    @Inject(CacheService) private cache: CacheService,
-    @Inject(Database) private db: Database
-  ) {}
-
-  async getUser(id: string) {
-    return this.cache.remember(`user:${id}`, 3600, async () => {
-      return await this.db.users.findById(id);
-    });
-  }
-
-  async updateUser(id: string, data: Partial<User>) {
-    const user = await this.db.users.update(id, data);
-
-    // Invalidate cache
-    await this.cache.forget(`user:${id}`);
-
-    // Or update cache directly
-    await this.cache.put(`user:${id}`, user, 3600);
-
-    return user;
-  }
-}
-```
-
-### API Response Caching
-
-```typescript
-@Injectable()
-export class ApiService {
-  constructor(@Inject(CacheService) private cache: CacheService) {}
-
-  async fetchData(endpoint: string) {
-    const cacheKey = `api:${endpoint}`;
-
-    return this.cache.remember(cacheKey, 300, async () => {
-      const response = await fetch(endpoint);
-      return response.json();
-    });
-  }
-}
-```
-
-### Rate Limiting
-
-```typescript
-@Injectable()
-export class RateLimiter {
-  constructor(@Inject(CacheService) private cache: CacheService) {}
-
-  async checkLimit(userId: string, limit: number = 100): Promise<boolean> {
-    const key = `rate:${userId}`;
-    const current = await this.cache.get(key, 0);
-
-    if (current >= limit) {
-      return false; // Rate limit exceeded
-    }
-
-    await this.cache.increment(key);
-
-    // Set expiration on first request
-    if (current === 0) {
-      await this.cache.put(key, 1, 3600); // 1 hour window
-    }
-
+  async put(key: string, value: any, seconds: number): Promise<boolean> {
+    localStorage.setItem(key, JSON.stringify({ value, expires: Date.now() + seconds * 1000 }));
     return true;
   }
+
+  // ... implement remaining methods
 }
 ```
 
-### Session Storage
+---
+
+## TypeScript
+
+The package is fully typed. All interfaces and types are exported:
 
 ```typescript
-@Injectable()
-export class SessionService {
-  constructor(@Inject(CacheService) private cache: CacheService) {}
-
-  async createSession(userId: string, data: any): Promise<string> {
-    const sessionId = generateId();
-    const key = `session:${sessionId}`;
-
-    await this.cache.put(key, { userId, ...data }, 86400); // 24 hours
-
-    return sessionId;
-  }
-
-  async getSession(sessionId: string) {
-    return this.cache.get(`session:${sessionId}`);
-  }
-
-  async destroySession(sessionId: string) {
-    await this.cache.forget(`session:${sessionId}`);
-  }
-}
+import type {
+  CacheModuleOptions,
+  CacheServiceInterface,
+  Store,
+  TaggableStore,
+  TaggedCache,
+  TagSet,
+  MemoryStoreConfig,
+  RedisStoreConfig,
+  NullStoreConfig,
+  RedisConnection,
+  CacheDriver,
+  StoreConfig,
+  UseCachedQueryOptions,
+  UseCachedQueryResult,
+} from '@abdokouta/react-cache';
 ```
+
+---
+
+## Laravel Comparison
+
+If you're coming from Laravel, here's how the API maps:
+
+| Laravel | react-cache |
+|---|---|
+| `Cache::get('key')` | `cache.get('key')` |
+| `Cache::put('key', $val, 3600)` | `cache.put('key', val, 3600)` |
+| `Cache::remember('key', 3600, fn)` | `cache.remember('key', 3600, fn)` |
+| `Cache::rememberForever('key', fn)` | `cache.rememberForever('key', fn)` |
+| `Cache::forget('key')` | `cache.forget('key')` |
+| `Cache::pull('key')` | `cache.pull('key')` |
+| `Cache::flush()` | `cache.flush()` |
+| `Cache::has('key')` | `cache.has('key')` |
+| `Cache::add('key', $val, 3600)` | `cache.add('key', val, 3600)` |
+| `Cache::forever('key', $val)` | `cache.forever('key', val)` |
+| `Cache::increment('key')` | `cache.increment('key')` |
+| `Cache::decrement('key')` | `cache.decrement('key')` |
+| `Cache::store('redis')` | `cache.store('redis')` |
+| `Cache::tags(['users'])->get()` | `cache.tags(['users']).get()` |
+| `config/cache.php` | `defineConfig({...})` |
+
+---
+
+## Requirements
+
+- Node.js >= 18.0.0
+- React 18 or 19
+- `@abdokouta/react-di` (dependency injection)
+- `@abdokouta/react-redis` (optional, for Redis driver)
+
+---
 
 ## License
 
-MIT
-
-## Contributing
-
-Contributions are welcome! Please read our contributing guidelines before
-submitting PRs.
-
-## Support
-
-- [Documentation](https://refine.dev/docs)
-- [GitHub Issues](https://github.com/refinedev/refine/issues)
-- [Discord Community](https://discord.gg/refine)
+[MIT](LICENSE) © [Abdelrhman Kouta](https://github.com/abdokouta)

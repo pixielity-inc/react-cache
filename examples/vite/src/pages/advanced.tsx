@@ -1,489 +1,375 @@
-import { useState, useEffect } from "react";
-import { useInject } from "@abdokouta/react-di";
-import { Card, Chip, Button, Separator } from "@heroui/react";
-
-import { ConfigService } from "@/services/config.service";
-import { ApiService } from "@/services/api.service";
-import { TransientService } from "@/services/transient.service";
-import { RequestService } from "@/services/request.service";
-import { LifecycleService } from "@/services/lifecycle.service";
-import { TestableService } from "@/services/testable.service";
-import { CacheService } from "@/services/cache.service";
-import DefaultLayout from "@/layouts/default";
-import { title } from "@/components/primitives";
+import { useState } from "react";
+import { Button, Card, Chip, Separator } from "@heroui/react";
 import {
-  CONFIG_SERVICE,
-  API_SERVICE,
-  TRANSIENT_SERVICE,
-  REQUEST_SERVICE,
-  LIFECYCLE_SERVICE,
-  TESTABLE_SERVICE,
+  CacheService,
+  CacheManager,
   CACHE_SERVICE,
-} from "@/constants";
+  CACHE_MANAGER,
+} from "@abdokouta/react-cache";
+import { useInject } from "@abdokouta/react-di";
+
+import { title } from "@/components/primitives";
+import DefaultLayout from "@/layouts/default";
 
 export default function AdvancedPage() {
-  // Dynamic Module Patterns
-  const configService = useInject<ConfigService>(CONFIG_SERVICE);
-  const apiService = useInject<ApiService>(API_SERVICE);
+  const cache = useInject<CacheService>(CACHE_SERVICE);
+  const manager = useInject<CacheManager>(CACHE_MANAGER);
 
-  // Service Scopes
-  const transientService1 = useInject<TransientService>(TRANSIENT_SERVICE);
-  const transientService2 = useInject<TransientService>(TRANSIENT_SERVICE);
-  const requestService1 = useInject<RequestService>(REQUEST_SERVICE);
-  const requestService2 = useInject<RequestService>(REQUEST_SERVICE);
+  // Basic ops state
+  const [lastKey, setLastKey] = useState("");
+  const [getValue, setGetValue] = useState<string | undefined>();
+  const [hasResult, setHasResult] = useState<boolean | null>(null);
 
-  // Lifecycle Management
-  const lifecycleService = useInject<LifecycleService>(LIFECYCLE_SERVICE);
+  // Remember state
+  const [rememberResult, setRememberResult] = useState<string | null>(null);
+  const [rememberForeverResult, setRememberForeverResult] = useState<
+    string | null
+  >(null);
 
-  // Advanced Patterns
-  const testableService = useInject<TestableService>(TESTABLE_SERVICE);
-  const cacheService = useInject<CacheService>(CACHE_SERVICE);
+  // Counter state
+  const [counter, setCounter] = useState<number | null>(null);
 
-  // State Management
-  const [apiStatus, setApiStatus] = useState(false);
-  const [lifecycleStatus, setLifecycleStatus] = useState({
-    initialized: false,
-    resources: [] as string[],
-  });
-  const [cacheStats, setCacheStats] = useState({ size: 0, maxSize: 0, ttl: 0 });
-  const [cacheTestKey, setCacheTestKey] = useState("");
-  const [cacheTestValue, setCacheTestValue] = useState<string | undefined>();
-  const [userData, setUserData] = useState<{
-    id: string;
-    name: string;
-    cached: boolean;
-  } | null>(null);
-  const [emailValidation, setEmailValidation] = useState<{
-    email: string;
-    valid: boolean;
-  } | null>(null);
+  // Pull state
+  const [pullResult, setPullResult] = useState<string | null>(null);
 
-  useEffect(() => {
-    setApiStatus(apiService.getConnectionStatus());
-    setLifecycleStatus(lifecycleService.getStatus());
-    setCacheStats(testableService.getCacheStats());
-  }, [apiService, lifecycleService, testableService]);
+  // Multi state
+  const [manyResult, setManyResult] = useState<Record<string, unknown> | null>(
+    null,
+  );
 
-  const config = configService.getAll();
+  // Store switching
+  const storeNames = manager.getStoreNames();
 
-  // Cache Operations
-  const handleCacheSet = () => {
-    const key = `test-${Date.now()}`;
-    const value = `Value at ${new Date().toLocaleTimeString()}`;
-    cacheService.set(key, value);
-    setCacheTestKey(key);
-    setCacheStats(cacheService.getStats());
+  // --- Basic Operations ---
+  const handlePut = async () => {
+    const key = `item:${Date.now()}`;
+    const value = `Created at ${new Date().toLocaleTimeString()}`;
+
+    await cache.put(key, value, 60);
+    setLastKey(key);
+    setGetValue(undefined);
+    setHasResult(null);
   };
 
-  const handleCacheGet = () => {
-    if (cacheTestKey) {
-      const value = cacheService.get<string>(cacheTestKey);
-      setCacheTestValue(value);
-    }
+  const handleGet = async () => {
+    if (!lastKey) return;
+
+    const value = await cache.get<string>(lastKey);
+
+    setGetValue(value ?? "(not found)");
   };
 
-  const handleCacheClear = () => {
-    cacheService.clear();
-    setCacheTestKey("");
-    setCacheTestValue(undefined);
-    setCacheStats(cacheService.getStats());
+  const handleHas = async () => {
+    if (!lastKey) return;
+
+    const exists = await cache.has(lastKey);
+
+    setHasResult(exists);
   };
 
-  // Testable Service Operations
-  const handleFetchUser = async () => {
-    const user = await testableService.fetchUserData("user-123");
-    setUserData(user);
+  const handleForget = async () => {
+    if (!lastKey) return;
+
+    await cache.forget(lastKey);
+    setGetValue(undefined);
+    setHasResult(null);
   };
 
-  const handleValidateEmail = () => {
-    const email = "test@example.com";
-    const valid = testableService.validateEmail(email);
-    setEmailValidation({ email, valid });
+  const handleFlush = async () => {
+    await cache.flush();
+    setLastKey("");
+    setGetValue(undefined);
+    setHasResult(null);
+    setRememberResult(null);
+    setRememberForeverResult(null);
+    setCounter(null);
+    setPullResult(null);
+    setManyResult(null);
+  };
+
+  // --- Remember ---
+  const handleRemember = async () => {
+    const value = await cache.remember("adv:remember", 30, async () => {
+      return `Computed at ${new Date().toLocaleTimeString()}`;
+    });
+
+    setRememberResult(value);
+  };
+
+  const handleRememberForever = async () => {
+    const value = await cache.rememberForever("adv:forever", async () => {
+      return `Stored forever at ${new Date().toLocaleTimeString()}`;
+    });
+
+    setRememberForeverResult(value);
+  };
+
+  // --- Counters ---
+  const handleIncrement = async () => {
+    const value = await cache.increment("adv:counter");
+
+    setCounter(value);
+  };
+
+  const handleDecrement = async () => {
+    const value = await cache.decrement("adv:counter");
+
+    setCounter(value);
+  };
+
+  // --- Pull ---
+  const handlePull = async () => {
+    await cache.put("adv:pull-me", "I will be removed after pull", 60);
+    const value = await cache.pull<string>("adv:pull-me");
+
+    setPullResult(value ?? "(empty)");
+  };
+
+  // --- Many ---
+  const handlePutMany = async () => {
+    await cache.putMany(
+      { "adv:a": "Alpha", "adv:b": "Bravo", "adv:c": "Charlie" },
+      60,
+    );
+    const values = await cache.many(["adv:a", "adv:b", "adv:c"]);
+
+    setManyResult(values);
+  };
+
+  // --- Add ---
+  const [addResult, setAddResult] = useState<boolean | null>(null);
+
+  const handleAdd = async () => {
+    const added = await cache.add("adv:unique", "first-write-wins", 60);
+
+    setAddResult(added);
   };
 
   return (
     <DefaultLayout>
       <section className="flex flex-col items-center justify-center gap-4 py-8 md:py-10">
         <div className="inline-block max-w-xl text-center justify-center">
-          <span className={title()}>Advanced DI Patterns</span>
+          <span className={title()}>Advanced Cache Operations</span>
           <p className="text-default-500 mt-4">
-            Comprehensive demonstration of dependency injection features
+            Interactive demo of every CacheService method
           </p>
         </div>
 
-        <div className="w-full max-w-6xl space-y-8">
-          {/* Dynamic Modules Section */}
+        <div className="w-full max-w-5xl space-y-8">
+          {/* Store Switching */}
           <div className="space-y-4">
-            <h2 className="text-3xl font-bold">Dynamic Modules</h2>
-            <p className="text-default-500">
-              Modules that accept runtime configuration and async initialization
-            </p>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Card className="p-6">
-                <h3 className="text-xl font-bold mb-4">forRoot Pattern</h3>
-                <p className="text-default-500 mb-4 text-sm">
-                  ConfigModule uses forRoot() to accept runtime configuration at
-                  module initialization
-                </p>
-                <div className="space-y-3">
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-semibold w-32">API URL:</span>
-                    <Chip size="sm" variant="soft">
-                      <Chip.Label>{config.apiUrl}</Chip.Label>
-                    </Chip>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-semibold w-32">Timeout:</span>
-                    <Chip size="sm" variant="soft">
-                      <Chip.Label>{config.timeout}ms</Chip.Label>
-                    </Chip>
-                  </div>
-                </div>
-              </Card>
-
-              <Card className="p-6">
-                <h3 className="text-xl font-bold mb-4">Async Factory</h3>
-                <p className="text-default-500 mb-4 text-sm">
-                  ApiModule uses useAsyncFactory for async initialization with
-                  external resources
-                </p>
-                <div className="space-y-3">
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-semibold w-32">Status:</span>
-                    <Chip
-                      color={apiStatus ? "success" : "danger"}
-                      size="sm"
-                      variant="soft"
-                    >
-                      <Chip.Label>
-                        {apiStatus ? "Connected" : "Disconnected"}
-                      </Chip.Label>
-                    </Chip>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-semibold w-32">
-                      Base URL:
-                    </span>
-                    <Chip size="sm" variant="soft">
-                      <Chip.Label>{apiService.getBaseUrl()}</Chip.Label>
-                    </Chip>
-                  </div>
-                </div>
-              </Card>
+            <h2 className="text-2xl font-bold">Store Switching</h2>
+            <div className="flex gap-2">
+              {storeNames.map((name) => (
+                <Chip
+                  key={name}
+                  color={
+                    name === manager.getDefaultDriver() ? "accent" : "default"
+                  }
+                  size="sm"
+                  variant="soft"
+                >
+                  <Chip.Label>{name}</Chip.Label>
+                </Chip>
+              ))}
             </div>
+            <p className="text-xs text-default-400">
+              Active: {manager.getDefaultDriver()} — switch stores with
+              cache.store(&quot;name&quot;)
+            </p>
           </div>
 
           <Separator />
 
-          {/* Service Scopes Section */}
+          {/* Basic Operations */}
           <div className="space-y-4">
-            <h2 className="text-3xl font-bold">Service Scopes</h2>
-            <p className="text-default-500">
-              Different lifecycle scopes control instance creation and sharing
-            </p>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Card className="p-6">
-                <h3 className="text-xl font-bold mb-4">Transient Scope</h3>
-                <p className="text-default-500 mb-4 text-sm">
-                  New instance created every time the service is injected
-                </p>
-                <div className="space-y-3">
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-semibold w-32">
-                      Instance 1:
-                    </span>
-                    <Chip color="accent" size="sm" variant="soft">
-                      <Chip.Label>
-                        {transientService1.getInstanceId()}
-                      </Chip.Label>
-                    </Chip>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-semibold w-32">
-                      Instance 2:
-                    </span>
-                    <Chip color="accent" size="sm" variant="soft">
-                      <Chip.Label>
-                        {transientService2.getInstanceId()}
-                      </Chip.Label>
-                    </Chip>
-                  </div>
-                  <p className="text-xs text-default-400 mt-2 italic">
-                    Notice the different IDs - each useInject() creates a new
-                    instance
-                  </p>
-                </div>
-              </Card>
-
-              <Card className="p-6">
-                <h3 className="text-xl font-bold mb-4">
-                  Request Scope (Simulated)
-                </h3>
-                <p className="text-default-500 mb-4 text-sm">
-                  Instance shared within a single request context
-                </p>
-                <div className="space-y-3">
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-semibold w-32">
-                      Request 1:
-                    </span>
-                    <Chip color="success" size="sm" variant="soft">
-                      <Chip.Label>{requestService1.getRequestId()}</Chip.Label>
-                    </Chip>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-semibold w-32">
-                      Request 2:
-                    </span>
-                    <Chip color="warning" size="sm" variant="soft">
-                      <Chip.Label>{requestService2.getRequestId()}</Chip.Label>
-                    </Chip>
-                  </div>
-                  <p className="text-xs text-default-400 mt-2 italic">
-                    Each injection simulates a new request with unique ID
-                  </p>
-                </div>
-              </Card>
-            </div>
-          </div>
-
-          <Separator />
-
-          {/* Lifecycle Management Section */}
-          <div className="space-y-4">
-            <h2 className="text-3xl font-bold">Lifecycle Management</h2>
-            <p className="text-default-500">
-              Services with initialization and cleanup hooks
-            </p>
-
+            <h2 className="text-2xl font-bold">
+              put / get / has / forget / flush
+            </h2>
             <Card className="p-6">
-              <h3 className="text-xl font-bold mb-4">
-                OnModuleInit & OnModuleDestroy
-              </h3>
-              <p className="text-default-500 mb-4 text-sm">
-                Lifecycle hooks called during service activation and
-                deactivation
-              </p>
-              <div className="space-y-4">
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-semibold w-32">Status:</span>
-                  <Chip
-                    color={lifecycleStatus.initialized ? "success" : "warning"}
-                    size="sm"
-                    variant="soft"
-                  >
-                    <Chip.Label>
-                      {lifecycleStatus.initialized
-                        ? "Initialized"
-                        : "Not Initialized"}
-                    </Chip.Label>
-                  </Chip>
-                </div>
+              <div className="flex flex-wrap gap-2 mb-4">
+                <Button size="sm" onPress={handlePut}>
+                  put()
+                </Button>
+                <Button
+                  isDisabled={!lastKey}
+                  size="sm"
+                  variant="secondary"
+                  onPress={handleGet}
+                >
+                  get()
+                </Button>
+                <Button
+                  isDisabled={!lastKey}
+                  size="sm"
+                  variant="secondary"
+                  onPress={handleHas}
+                >
+                  has()
+                </Button>
+                <Button
+                  isDisabled={!lastKey}
+                  size="sm"
+                  variant="outline"
+                  onPress={handleForget}
+                >
+                  forget()
+                </Button>
+                <Button size="sm" variant="danger" onPress={handleFlush}>
+                  flush()
+                </Button>
+              </div>
 
-                {lifecycleStatus.resources.length > 0 && (
-                  <div>
-                    <span className="text-sm font-semibold block mb-2">
-                      Initialized Resources:
-                    </span>
-                    <div className="flex flex-wrap gap-2">
-                      {lifecycleStatus.resources.map((resource, index) => (
-                        <Chip
-                          color="success"
-                          key={index}
-                          size="sm"
-                          variant="soft"
-                        >
-                          <Chip.Label>{resource}</Chip.Label>
-                        </Chip>
-                      ))}
-                    </div>
+              {lastKey && (
+                <div className="p-3 bg-default-100 rounded text-xs space-y-1">
+                  <p>
+                    <span className="font-semibold">key:</span> {lastKey}
+                  </p>
+                  {getValue !== undefined && (
+                    <p>
+                      <span className="font-semibold">get():</span> {getValue}
+                    </p>
+                  )}
+                  {hasResult !== null && (
+                    <p>
+                      <span className="font-semibold">has():</span>{" "}
+                      {hasResult ? "true" : "false"}
+                    </p>
+                  )}
+                </div>
+              )}
+            </Card>
+          </div>
+
+          <Separator />
+
+          {/* Remember Pattern */}
+          <div className="space-y-4">
+            <h2 className="text-2xl font-bold">remember / rememberForever</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Card className="p-6">
+                <h3 className="text-lg font-bold mb-3">
+                  remember(key, ttl, fn)
+                </h3>
+                <p className="text-default-500 text-xs mb-3">
+                  Returns cached value or computes and stores it
+                </p>
+                <Button size="sm" onPress={handleRemember}>
+                  Run
+                </Button>
+                {rememberResult && (
+                  <div className="mt-3 p-2 bg-default-100 rounded text-xs">
+                    {rememberResult}
+                    <p className="text-default-400 mt-1 italic">
+                      Same value until 30s TTL expires
+                    </p>
                   </div>
                 )}
+              </Card>
 
-                <div className="bg-default-100 p-3 rounded-lg text-xs">
-                  <p className="font-semibold mb-1">Lifecycle Flow:</p>
-                  <p className="text-default-600">
-                    1. Constructor called → 2. onActivation hook → 3.
-                    onModuleInit() → 4. Service ready → 5. onModuleDestroy() →
-                    6. onDeactivation hook
-                  </p>
-                </div>
+              <Card className="p-6">
+                <h3 className="text-lg font-bold mb-3">
+                  rememberForever(key, fn)
+                </h3>
+                <p className="text-default-500 text-xs mb-3">
+                  Same as remember but never expires
+                </p>
+                <Button size="sm" onPress={handleRememberForever}>
+                  Run
+                </Button>
+                {rememberForeverResult && (
+                  <div className="mt-3 p-2 bg-default-100 rounded text-xs">
+                    {rememberForeverResult}
+                  </div>
+                )}
+              </Card>
+            </div>
+          </div>
+
+          <Separator />
+
+          {/* Increment / Decrement */}
+          <div className="space-y-4">
+            <h2 className="text-2xl font-bold">increment / decrement</h2>
+            <Card className="p-6">
+              <div className="flex items-center gap-3">
+                <Button size="sm" onPress={handleDecrement}>
+                  decrement()
+                </Button>
+                <Chip color="accent" size="lg" variant="soft">
+                  <Chip.Label>{counter ?? 0}</Chip.Label>
+                </Chip>
+                <Button size="sm" onPress={handleIncrement}>
+                  increment()
+                </Button>
               </div>
             </Card>
           </div>
 
           <Separator />
 
-          {/* Advanced Patterns Section */}
+          {/* Pull, Add, Many */}
           <div className="space-y-4">
-            <h2 className="text-3xl font-bold">Advanced Patterns</h2>
-            <p className="text-default-500">
-              Complex dependency injection patterns and use cases
-            </p>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <h2 className="text-2xl font-bold">pull / add / many</h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <Card className="p-6">
-                <h3 className="text-xl font-bold mb-4">Cache Service</h3>
-                <p className="text-default-500 mb-4 text-sm">
-                  Service with symbol-based token injection and TTL management
+                <h3 className="text-lg font-bold mb-3">pull(key)</h3>
+                <p className="text-default-500 text-xs mb-3">
+                  Get and remove in one call
                 </p>
-                <div className="space-y-3">
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-semibold w-24">Size:</span>
-                    <Chip size="sm" variant="soft">
+                <Button size="sm" onPress={handlePull}>
+                  Run
+                </Button>
+                {pullResult && (
+                  <div className="mt-3 p-2 bg-default-100 rounded text-xs">
+                    {pullResult}
+                    <p className="text-default-400 mt-1 italic">
+                      Key is now deleted
+                    </p>
+                  </div>
+                )}
+              </Card>
+
+              <Card className="p-6">
+                <h3 className="text-lg font-bold mb-3">add(key, val, ttl)</h3>
+                <p className="text-default-500 text-xs mb-3">
+                  Store only if key doesn&apos;t exist
+                </p>
+                <Button size="sm" onPress={handleAdd}>
+                  Run
+                </Button>
+                {addResult !== null && (
+                  <div className="mt-3 p-2 bg-default-100 rounded text-xs">
+                    <Chip
+                      color={addResult ? "success" : "warning"}
+                      size="sm"
+                      variant="soft"
+                    >
                       <Chip.Label>
-                        {cacheStats.size} / {cacheStats.maxSize}
+                        {addResult ? "Added (new)" : "Skipped (exists)"}
                       </Chip.Label>
                     </Chip>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-semibold w-24">TTL:</span>
-                    <Chip size="sm" variant="soft">
-                      <Chip.Label>{cacheStats.ttl}ms</Chip.Label>
-                    </Chip>
-                  </div>
-
-                  <div className="flex gap-2 mt-4">
-                    <Button onPress={handleCacheSet} size="sm">
-                      Set Value
-                    </Button>
-                    <Button
-                      isDisabled={!cacheTestKey}
-                      onPress={handleCacheGet}
-                      size="sm"
-                      variant="secondary"
-                    >
-                      Get Value
-                    </Button>
-                    <Button
-                      onPress={handleCacheClear}
-                      size="sm"
-                      variant="danger"
-                    >
-                      Clear
-                    </Button>
-                  </div>
-
-                  {cacheTestKey && (
-                    <div className="mt-3 p-2 bg-default-100 rounded text-xs">
-                      <p className="font-semibold">Last Key: {cacheTestKey}</p>
-                      {cacheTestValue !== undefined && (
-                        <p className="text-default-600">
-                          Value: {cacheTestValue}
-                        </p>
-                      )}
-                      {cacheTestValue === undefined && cacheTestKey && (
-                        <p className="text-danger">
-                          Value expired or not found
-                        </p>
-                      )}
-                    </div>
-                  )}
-                </div>
+                )}
               </Card>
 
               <Card className="p-6">
-                <h3 className="text-xl font-bold mb-4">Testable Service</h3>
-                <p className="text-default-500 mb-4 text-sm">
-                  Service designed for easy testing with dependency injection
+                <h3 className="text-lg font-bold mb-3">putMany / many</h3>
+                <p className="text-default-500 text-xs mb-3">
+                  Bulk store and retrieve
                 </p>
-                <div className="space-y-3">
-                  <Button
-                    className="w-full"
-                    onPress={handleFetchUser}
-                    size="sm"
-                  >
-                    Fetch User Data
-                  </Button>
-
-                  {userData && (
-                    <div className="p-2 bg-default-100 rounded text-xs">
-                      <p className="font-semibold">User ID: {userData.id}</p>
-                      <p className="text-default-600">Name: {userData.name}</p>
-                      <Chip
-                        className="mt-1"
-                        color={userData.cached ? "success" : "warning"}
-                        size="sm"
-                        variant="soft"
-                      >
-                        <Chip.Label>
-                          {userData.cached ? "From Cache" : "Fresh Data"}
-                        </Chip.Label>
-                      </Chip>
-                    </div>
-                  )}
-
-                  <Button
-                    className="w-full"
-                    onPress={handleValidateEmail}
-                    size="sm"
-                    variant="secondary"
-                  >
-                    Validate Email
-                  </Button>
-
-                  {emailValidation && (
-                    <div className="p-2 bg-default-100 rounded text-xs">
-                      <p className="font-semibold">
-                        Email: {emailValidation.email}
+                <Button size="sm" onPress={handlePutMany}>
+                  Run
+                </Button>
+                {manyResult && (
+                  <div className="mt-3 p-2 bg-default-100 rounded text-xs space-y-1">
+                    {Object.entries(manyResult).map(([k, v]) => (
+                      <p key={k}>
+                        <span className="font-semibold">{k}:</span> {String(v)}
                       </p>
-                      <Chip
-                        className="mt-1"
-                        color={emailValidation.valid ? "success" : "danger"}
-                        size="sm"
-                        variant="soft"
-                      >
-                        <Chip.Label>
-                          {emailValidation.valid ? "Valid" : "Invalid"}
-                        </Chip.Label>
-                      </Chip>
-                    </div>
-                  )}
-                </div>
-              </Card>
-            </div>
-          </div>
-
-          <Separator />
-
-          {/* Key Concepts Section */}
-          <div className="space-y-4">
-            <h2 className="text-3xl font-bold">Key Concepts</h2>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <Card className="p-4">
-                <h4 className="text-lg font-bold mb-2">Symbol Tokens</h4>
-                <p className="text-xs text-default-500">
-                  Use Symbol.for() for unique injection tokens to avoid naming
-                  conflicts
-                </p>
-                <code className="text-xs bg-default-100 p-2 rounded block mt-2">
-                  CACHE_CONFIG = Symbol.for()
-                </code>
-              </Card>
-
-              <Card className="p-4">
-                <h4 className="text-lg font-bold mb-2">Factory Providers</h4>
-                <p className="text-xs text-default-500">
-                  Create instances with custom logic using useFactory or
-                  useAsyncFactory
-                </p>
-                <code className="text-xs bg-default-100 p-2 rounded block mt-2">
-                  useAsyncFactory: async () =&gt; ...
-                </code>
-              </Card>
-
-              <Card className="p-4">
-                <h4 className="text-lg font-bold mb-2">Module Imports</h4>
-                <p className="text-xs text-default-500">
-                  Compose modules by importing other modules and their exported
-                  providers
-                </p>
-                <code className="text-xs bg-default-100 p-2 rounded block mt-2">
-                  imports: [CacheModule]
-                </code>
+                    ))}
+                  </div>
+                )}
               </Card>
             </div>
           </div>

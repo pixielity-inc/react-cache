@@ -1,5 +1,5 @@
 /**
- * @abdokouta/cache
+ * @abdokouta/react-cache
  *
  * Laravel-inspired caching system for Refine with multiple drivers and stores.
  * Provides a clean, unified interface for caching with support for memory,
@@ -8,7 +8,7 @@
  * @example
  * Basic usage with memory store:
  * ```typescript
- * import { CacheModule, CacheService } from '@abdokouta/cache';
+ * import { CacheModule, CacheService } from '@abdokouta/react-cache';
  * import { Module, Injectable, Inject } from '@abdokouta/react-di';
  *
  * @Module({
@@ -51,7 +51,7 @@
  * @example
  * React hook usage:
  * ```typescript
- * import { useCache, useCachedQuery } from '@abdokouta/cache';
+ * import { useCache, useCachedQuery } from '@abdokouta/react-cache';
  *
  * function UserProfile({ userId }: { userId: string }) {
  *   const cache = useCache();
@@ -66,7 +66,7 @@
  * }
  * ```
  *
- * @module @abdokouta/cache
+ * @module @abdokouta/react-cache
  */
 
 // ============================================================================
@@ -75,8 +75,9 @@
 export { CacheModule } from './cache.module';
 
 // ============================================================================
-// Core Service
+// Core Services
 // ============================================================================
+export { CacheManager } from './services/cache-manager.service';
 export { CacheService } from './services/cache.service';
 
 // ============================================================================
@@ -102,7 +103,7 @@ export { useCachedQuery } from './hooks';
 // ============================================================================
 // Types
 // ============================================================================
-export type { CacheDriver, StoreConfig } from './types';
+export type { CacheDriver, StoreConfig, DriverCreator } from './types';
 
 // ============================================================================
 // Interfaces
@@ -113,6 +114,7 @@ export type {
   RedisStoreConfig,
   NullStoreConfig,
   RedisConnection,
+  RedisFactory,
   Store,
   TaggableStore,
   TagSet as ITagSet,
@@ -126,3 +128,8 @@ export type {
 // Utils
 // ============================================================================
 export { defineConfig } from './utils';
+
+// ============================================================================
+// Constants (DI Tokens)
+// ============================================================================
+export { CACHE_CONFIG, CACHE_SERVICE, CACHE_MANAGER, REDIS_FACTORY } from './constants';

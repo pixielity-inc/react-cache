@@ -2,4 +2,4 @@
  * Constants
  */
 
-export { CACHE_TOKENS } from './tokens.constant';
+export { CACHE_CONFIG, CACHE_SERVICE, CACHE_MANAGER, REDIS_FACTORY } from './tokens.constant';

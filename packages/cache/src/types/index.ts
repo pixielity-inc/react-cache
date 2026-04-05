@@ -9,3 +9,4 @@
 
 export type { CacheDriver } from './cache-driver.type';
 export type { StoreConfig } from './store-config.type';
+export type { DriverCreator } from './driver-creator.type';

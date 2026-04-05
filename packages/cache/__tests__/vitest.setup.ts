@@ -1,5 +1,5 @@
 /**
- * @fileoverview Vitest setup file for @abdokouta/cache package
+ * @fileoverview Vitest setup file for @abdokouta/react-cache package
  *
  * This file configures the testing environment before running tests.
  * It sets up container mocking for dependency injection tests.
@@ -7,7 +7,7 @@
  * Setup Features:
  * - Container mocking for DI tests
  *
- * @module @abdokouta/cache
+ * @module @abdokouta/react-cache
  * @category Configuration
  */
 

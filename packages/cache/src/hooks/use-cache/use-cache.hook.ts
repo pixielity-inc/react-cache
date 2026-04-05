@@ -2,9 +2,6 @@
  * useCache Hook
  *
  * React hook for accessing the cache system in components.
- * Provides a convenient way to interact with cache from React components.
- *
- * **Note:** This requires React and @abdokouta/react-di to be installed.
  *
  * @module hooks/use-cache
  */
@@ -12,65 +9,60 @@
 import { useInject } from '@abdokouta/react-di';
 
 import { CacheService } from '@/services/cache.service';
+import { CacheManager } from '@/services/cache-manager.service';
+import { CACHE_SERVICE, CACHE_MANAGER } from '@/constants/tokens.constant';
 
 /**
- * Hook to access the cache system
+ * Hook to access the cache system.
  *
- * Returns the CacheService instance from the DI container.
+ * Without arguments, returns the default store's CacheService.
+ * With a store name, resolves that store via CacheManager.
  *
- * @param storeName - Optional store name (uses default if not specified)
+ * @param storeName - Optional store name (uses default if omitted)
  * @returns CacheService instance for cache operations
  *
  * @example
  * ```typescript
  * function UserProfile({ userId }: { userId: string }) {
  *   const cache = useCache();
- *   const [user, setUser] = useState(null);
  *
  *   useEffect(() => {
- *     async function loadUser() {
- *       // Try to get from cache first
- *       const cached = await cache.get(`user:${userId}`);
- *
- *       if (cached) {
- *         setUser(cached);
- *       } else {
- *         const user = await fetchUser(userId);
- *         await cache.put(`user:${userId}`, user, 3600);
- *         setUser(user);
- *       }
- *     }
- *
- *     loadUser();
+ *     cache.remember(`user:${userId}`, 3600, () => fetchUser(userId))
+ *       .then(setUser);
  *   }, [userId]);
- *
- *   return <div>{user?.name}</div>;
  * }
  * ```
  *
  * @example
  * ```typescript
- * // Use specific store
- * function StatsWidget() {
- *   const memoryCache = useCache('memory');
- *
- *   const incrementViews = async () => {
- *     await memoryCache.increment('page:views');
- *   };
- *
- *   return <button onClick={incrementViews}>View Page</button>;
- * }
+ * // Use a specific store
+ * const redisCache = useCache('redis');
  * ```
  */
 export function useCache(storeName?: string): CacheService {
-  const cacheService = useInject<CacheService>(CacheService);
+  if (storeName) {
+    // Resolve a specific store via the manager
+    const manager = useInject<CacheManager>(CACHE_MANAGER);
+
+    if (!manager) {
+      throw new Error(
+        'CacheManager not found in DI container. ' +
+          'Make sure CacheModule.forRoot() is imported in your application.'
+      );
+    }
+
+    return manager.store(storeName);
+  }
+
+  // Default store — injected directly as CACHE_SERVICE
+  const cacheService = useInject<CacheService>(CACHE_SERVICE);
 
   if (!cacheService) {
     throw new Error(
       'CacheService not found in DI container. ' +
-        'Make sure CacheModule is imported in your application.'
+        'Make sure CacheModule.forRoot() is imported in your application.'
     );
   }
 
-  return storeName ? cacheService.store(storeName) : cacheService;
+  return cacheService;
 }

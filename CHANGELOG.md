@@ -17,8 +17,7 @@ New fluent builder pattern for initializing the DI container:
 ```typescript
 import { Container } from "@abdokouta/react-di";
 
-Container
-  .configure()
+Container.configure()
   .withModule(AppModule)
   .withLogLevel("debug")
   .withDefaultScope("Singleton")
@@ -26,6 +25,7 @@ Container
 ```
 
 Available methods:
+
 - `.configure()` - Start configuration
 - `.withModule(module)` - Set root module (required)
 - `.withLogLevel(level)` - Set log level ("none" | "info" | "debug")

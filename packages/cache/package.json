@@ -1,6 +1,6 @@
 {
   "name": "@abdokouta/react-cache",
-  "version": "1.0.2",
+  "version": "1.1.0",
   "description": "Laravel-inspired caching system with multiple drivers (Memory, Redis, Null) for React",
   "license": "MIT",
   "author": {
@@ -61,7 +61,8 @@
     "release": "pnpm publish --access public --no-git-checks"
   },
   "dependencies": {
-    "@abdokouta/react-di": "^2.0.0"
+    "@abdokouta/react-di": "^2.1.3",
+    "@abdokouta/react-support": "^1.1.0"
   },
   "peerDependencies": {
     "@abdokouta/react-redis": "^1.0.0",
@@ -77,6 +78,7 @@
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",
+    "eslint": "10.2.0",
     "@nesvel/eslint-config": "^1.0.5",
     "@nesvel/prettier-config": "^1.0.3",
     "@nesvel/tsup-config": "^1.0.3",

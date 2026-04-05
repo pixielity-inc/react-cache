@@ -2,104 +2,78 @@
  * Cache Module
  *
  * Configures the cache system for dependency injection.
- * Provides CacheService (NO manager) to the application.
+ * Registers CacheManager as both CACHE_MANAGER and CACHE_SERVICE
+ * (the manager IS a CacheService via inheritance).
  *
  * @module cache.module
- */
-
-import { Module, forRoot, type DynamicModule } from '@abdokouta/react-di';
-
-import type { CacheModuleOptions } from '@/interfaces';
-import { CacheService } from '@/services/cache.service';
-import { CACHE_CONFIG, CACHE_SERVICE } from '@/constants/tokens.constant';
-
-/**
- * Cache module
- *
- * Provides CacheService to the application via dependency injection.
- * The service handles stores internally (NO separate manager).
  *
  * @example
  * ```typescript
  * import { Module } from '@abdokouta/react-di';
- * import { CacheModule } from '@abdokouta/cache';
- * import { RedisModule } from '@abdokouta/redis';
+ * import { CacheModule } from '@abdokouta/react-cache';
  *
  * @Module({
  *   imports: [
- *     // Configure Redis (optional, only if using Redis store)
- *     RedisModule.forRoot({
- *       default: 'cache',
- *       connections: {
- *         cache: {
- *           url: process.env.UPSTASH_REDIS_REST_URL!,
- *           token: process.env.UPSTASH_REDIS_REST_TOKEN!,
- *         },
- *       },
- *     }),
- *
- *     // Configure Cache
  *     CacheModule.forRoot({
  *       default: 'memory',
  *       stores: {
- *         memory: {
- *           driver: 'memory',
- *           maxSize: 1000,
- *           ttl: 300,
- *         },
- *         redis: {
- *           driver: 'redis',
- *           connection: 'cache',
- *           prefix: 'app_',
- *         },
- *         null: {
- *           driver: 'null',
- *         },
+ *         memory: { driver: 'memory', maxSize: 1000, ttl: 300 },
  *       },
- *       prefix: 'myapp_',
  *     }),
  *   ],
  * })
  * export class AppModule {}
  * ```
  */
+
+import { Module, type DynamicModule } from '@abdokouta/react-di';
+
+import type { CacheModuleOptions } from '@/interfaces';
+import { CacheManager } from '@/services/cache-manager.service';
+import { CACHE_CONFIG, CACHE_SERVICE, CACHE_MANAGER } from '@/constants/tokens.constant';
+
 @Module({})
 // biome-ignore lint/complexity/noStaticOnlyClass: Module pattern requires static methods
 export class CacheModule {
   /**
-   * Configure the cache module
+   * Configure the cache module with the given options.
    *
-   * @param config - Cache configuration
-   * @returns Dynamic module
+   * Registers:
+   * - `CACHE_CONFIG` — the raw config object
+   * - `CACHE_MANAGER` — the CacheManager instance (cache ops + management)
+   * - `CACHE_SERVICE` — same instance, typed as CacheService (cache ops only)
    *
-   * @example
-   * ```typescript
-   * CacheModule.forRoot({
-   *   default: 'memory',
-   *   stores: {
-   *     memory: {
-   *       driver: 'memory',
-   *       maxSize: 1000,
-   *       ttl: 300,
-   *     },
-   *   },
-   * })
-   * ```
+   * Both tokens point to the same CacheManager instance because the
+   * manager extends CacheService (inherits all cache operations).
+   *
+   * @param config - Cache configuration from defineConfig()
+   * @returns Dynamic module definition
    */
   static forRoot(config: CacheModuleOptions): DynamicModule {
-    return forRoot(CacheModule, {
+    // Create the manager eagerly — it resolves the default store in its constructor
+    const manager = new CacheManager(config);
+
+    return {
+      module: CacheModule,
       providers: [
         {
           provide: CACHE_CONFIG,
           useValue: config,
+          isGlobal: true,
         },
         {
-          provide: CACHE_SERVICE,
-          useValue: CacheService,
+          provide: CACHE_MANAGER,
+          useValue: manager,
+          isGlobal: true,
         },
-        CacheService,
+        {
+          // Same instance — manager IS a CacheService via inheritance
+          provide: CACHE_SERVICE,
+          useValue: manager,
+          isGlobal: true,
+        },
       ],
-      exports: [CacheService, CACHE_CONFIG],
-    });
+      exports: [CACHE_SERVICE, CACHE_MANAGER, CACHE_CONFIG],
+    };
   }
 }

@@ -1,16 +1,25 @@
+import { lazy, Suspense } from "react";
 import { Route, Routes } from "react-router-dom";
 
-import IndexPage from "@/pages/index";
-import ContainerPage from "@/pages/container";
-import AdvancedPage from "@/pages/advanced";
+const IndexPage = lazy(() => import("@/pages/index"));
+const ConfigPage = lazy(() => import("@/pages/config"));
+const AdvancedPage = lazy(() => import("@/pages/advanced"));
 
 function App() {
   return (
-    <Routes>
-      <Route element={<IndexPage />} path="/" />
-      <Route element={<ContainerPage />} path="/container" />
-      <Route element={<AdvancedPage />} path="/advanced" />
-    </Routes>
+    <Suspense
+      fallback={
+        <div className="flex items-center justify-center h-screen">
+          Loading...
+        </div>
+      }
+    >
+      <Routes>
+        <Route element={<IndexPage />} path="/" />
+        <Route element={<ConfigPage />} path="/config" />
+        <Route element={<AdvancedPage />} path="/advanced" />
+      </Routes>
+    </Suspense>
   );
 }
 

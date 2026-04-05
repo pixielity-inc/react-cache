@@ -1,258 +1,140 @@
 /**
  * Cache Service
  *
- * Main cache service that handles stores internally (NO separate manager or repository).
- * Provides high-level cache operations with support for multiple stores.
+ * The public-facing API for cache operations, wrapping a single Store instance.
+ * This mirrors Laravel's `Illuminate\Cache\Service` — all the convenient
+ * methods like `remember`, `pull`, `add`, `tags` live here.
  *
- * **Architecture:**
- * - Manages stores internally (no separate CacheManager)
- * - Provides Laravel-inspired Repository-style API directly
- * - Supports multiple cache drivers (memory, redis, null)
- * - Lazy store initialization
- * - Tagged caching support (Redis only)
+ * Users never create this directly. It's returned by `CacheManager.store()`.
  *
  * **Laravel Comparison:**
- * - `Cache::get()` → `cacheService.get()`
- * - `Cache::put()` → `cacheService.put()`
- * - `Cache::remember()` → `cacheService.remember()`
- * - `Cache::tags()` → `cacheService.tags()`
- * - `Cache::store()` → `cacheService.store()`
+ * - `Cache::get('key')` → `service.get('key')`
+ * - `Cache::put('key', val, 3600)` → `service.put('key', val, 3600)`
+ * - `Cache::remember('key', 3600, fn)` → `service.remember('key', 3600, fn)`
+ * - `Cache::tags(['users'])->flush()` → `service.tags(['users']).flush()`
+ * - `Cache::pull('key')` → `service.pull('key')`
+ * - `Cache::add('key', val, 3600)` → `service.add('key', val, 3600)`
  *
- * @example
- * ```typescript
- * // Basic operations
- * await cacheService.put('key', 'value', 3600);
- * const value = await cacheService.get('key');
- *
- * // Remember pattern (get-or-set)
- * const user = await cacheService.remember('user:123', 3600, async () => {
- *   return await fetchUserFromDatabase(123);
- * });
- *
- * // Tagged caching (Redis only)
- * await cacheService.tags(['users', 'premium']).put('user:456', user, 3600);
- * await cacheService.tags(['premium']).flush();
- *
- * // Multiple stores
- * const redisCache = cacheService.store('redis');
- * await redisCache.put('key', 'value', 3600);
- * ```
- *
- * @module services/cache
+ * @module services/cache-service
  */
-import type { StoreConfig } from '@/types';
-import { NullStore } from '@/stores/null.store';
-import { RedisStore } from '@/stores/redis.store';
-import { MemoryStore } from '@/stores/memory.store';
-import { Injectable, Inject } from '@abdokouta/react-di';
-import { CACHE_CONFIG } from '@/constants/tokens.constant';
-import type { TaggedCache, Store, TaggableStore, CacheModuleOptions } from '@/interfaces';
-import type { CacheServiceInterface } from '@/interfaces/cache-service.interface';
+
+import type { Store, TaggableStore, TaggedCache } from '@/interfaces';
 
 /**
- * Cache service implementation
+ * Cache Service
  *
- * Provides a high-level API for cache operations with convenient helper methods.
+ * Wraps a single Store and provides the full cache API.
  *
  * @example
  * ```typescript
- * const cache = new service(store);
+ * const cache = cacheManager.store(); // returns CacheService
  *
- * // Basic operations
- * await cache.put('key', 'value', 3600);
- * const value = await cache.get('key');
+ * await cache.put('user:123', user, 3600);
+ * const user = await cache.get('user:123');
  *
- * // Remember pattern (get-or-set)
- * const user = await cache.remember('user:123', 3600, async () => {
- *   return await fetchUserFromDatabase(123);
- * });
+ * const data = await cache.remember('key', 600, async () => fetchData());
  *
- * // Tagged caching
- * await cache.tags(['users', 'premium']).put('user:456', user, 3600);
- * await cache.tags(['premium']).flush();
+ * await cache.tags(['users']).flush(); // Redis only
  * ```
  */
-@Injectable()
-export class CacheService implements CacheServiceInterface {
+export class CacheService {
   /**
-   * Cache configuration
+   * The underlying cache store.
    */
-  private readonly config: CacheModuleOptions;
+  private readonly store: Store;
 
   /**
-   * Cached store instances
+   * Default TTL in seconds, from the store's config.
    */
-  private stores: Map<string, Store> = new Map();
+  private readonly defaultTtl: number;
 
   /**
-   * Default store instance
-   */
-  private defaultStore?: Store;
-
-  /**
-   * Create a new cache service
+   * Create a new cache service.
    *
-   * @param config - Cache configuration
+   * @param store - The Store instance to wrap
+   * @param defaultTtl - Default TTL in seconds (used when no TTL is specified)
    */
-  constructor(@Inject(CACHE_CONFIG) config: CacheModuleOptions) {
-    this.config = config;
+  constructor(store: Store, defaultTtl: number = 300) {
+    this.store = store;
+    this.defaultTtl = defaultTtl;
   }
 
-  /**
-   * Get a cache store instance
-   *
-   * Returns the specified store, or the default store if no name is provided.
-   * Stores are lazily initialized and cached.
-   *
-   * @param name - Store name (uses default if not specified)
-   * @returns Store instance
-   * @throws Error if store is not configured
-   *
-   * @example
-   * ```typescript
-   * // Use default store
-   * const cache = cacheService.store();
-   * await cache.put('key', 'value', 3600);
-   *
-   * // Use specific store
-   * const redisCache = cacheService.store('redis');
-   * await redisCache.put('key', 'value', 3600);
-   * ```
-   */
-  store(name?: string): CacheService {
-    const storeName = name ?? this.config.default;
-
-    // Return cached store if exists
-    if (this.stores.has(storeName)) {
-      // Create a new CacheService instance with this store as default
-      const service = new CacheService(this.config);
-      service.defaultStore = this.stores.get(storeName);
-      service.stores = this.stores;
-      return service;
-    }
-
-    // Resolve and cache new store
-    const store = this.resolve(storeName);
-    this.stores.set(storeName, store);
-
-    // Create a new CacheService instance with this store as default
-    const service = new CacheService(this.config);
-    service.defaultStore = store;
-    service.stores = this.stores;
-    return service;
-  }
+  // ──────────────────────────────────────────────────────────────────────────
+  // Read Operations
+  // ──────────────────────────────────────────────────────────────────────────
 
   /**
-   * Determine if an item exists in the cache
+   * Determine if an item exists in the cache.
    *
    * @param key - Cache key
-   * @returns True if the item exists
-   *
-   * @example
-   * ```typescript
-   * if (await cache.has('user:123')) {
-   *   console.log('User is cached');
-   * }
-   * ```
+   * @returns True if the key exists and is not undefined/null
    */
-  has(key: string): Promise<boolean> {
-    return this.get(key).then((value) => value !== undefined && value !== null);
+  async has(key: string): Promise<boolean> {
+    const value = await this.store.get(key);
+
+    return value !== undefined && value !== null;
   }
 
   /**
-   * Retrieve an item from the cache
+   * Retrieve an item from the cache.
    *
    * @param key - Cache key
-   * @param defaultValue - Default value if key doesn't exist
-   * @returns The cached value or default value
-   *
-   * @example
-   * ```typescript
-   * const user = await cache.get('user:123', { name: 'Guest' });
-   * ```
+   * @param defaultValue - Returned if the key doesn't exist
+   * @returns The cached value, or the default
    */
-  get<T = any>(key: string, defaultValue?: T): Promise<T | undefined> {
-    const store = this.getDefaultStore();
-    return store.get(key).then((value) => (value !== undefined ? value : defaultValue));
+  async get<T = any>(key: string, defaultValue?: T): Promise<T | undefined> {
+    const value = await this.store.get(key);
+
+    return value !== undefined ? value : defaultValue;
   }
 
   /**
-   * Retrieve multiple items from the cache
+   * Retrieve multiple items from the cache.
    *
    * @param keys - Array of cache keys
-   * @returns Object mapping keys to values
-   *
-   * @example
-   * ```typescript
-   * const data = await cache.many(['user:1', 'user:2', 'user:3']);
-   * ```
+   * @returns Object mapping keys to their values
    */
-  many<T = any>(keys: string[]): Promise<Record<string, T>> {
-    const store = this.getDefaultStore();
-    return store.many(keys);
+  async many<T = any>(keys: string[]): Promise<Record<string, T>> {
+    return this.store.many(keys);
   }
 
+  // ──────────────────────────────────────────────────────────────────────────
+  // Write Operations
+  // ──────────────────────────────────────────────────────────────────────────
+
   /**
-   * Store an item in the cache
+   * Store an item in the cache.
    *
    * @param key - Cache key
-   * @param value - Value to cache
-   * @param ttl - TTL in seconds (default: from config)
+   * @param value - Value to store
+   * @param ttl - TTL in seconds (defaults to store config TTL)
    * @returns True if successful
-   *
-   * @example
-   * ```typescript
-   * await cache.put('user:123', { name: 'John' }, 3600);
-   * ```
    */
-  put<T = any>(key: string, value: T, ttl?: number): Promise<boolean> {
-    const store = this.getDefaultStore();
-    const seconds = ttl ?? this.getDefaultTtl();
-    return store.put(key, value, seconds);
+  async put<T = any>(key: string, value: T, ttl?: number): Promise<boolean> {
+    return this.store.put(key, value, ttl ?? this.defaultTtl);
   }
 
   /**
-   * Store multiple items in the cache
+   * Store multiple items in the cache.
    *
    * @param values - Object mapping keys to values
-   * @param ttl - TTL in seconds (default: from config)
+   * @param ttl - TTL in seconds (defaults to store config TTL)
    * @returns True if successful
-   *
-   * @example
-   * ```typescript
-   * await cache.putMany({
-   *   'user:1': user1,
-   *   'user:2': user2
-   * }, 3600);
-   * ```
    */
-  putMany<T = any>(values: Record<string, T>, ttl?: number): Promise<boolean> {
-    const store = this.getDefaultStore();
-    const seconds = ttl ?? this.getDefaultTtl();
-    return store.putMany(values, seconds);
+  async putMany<T = any>(values: Record<string, T>, ttl?: number): Promise<boolean> {
+    return this.store.putMany(values, ttl ?? this.defaultTtl);
   }
 
   /**
-   * Store an item in the cache if it doesn't exist
+   * Store an item only if the key doesn't already exist.
    *
    * @param key - Cache key
-   * @param value - Value to cache
-   * @param ttl - TTL in seconds (default: from config)
+   * @param value - Value to store
+   * @param ttl - TTL in seconds
    * @returns True if the item was added, false if it already existed
-   *
-   * @example
-   * ```typescript
-   * const added = await cache.add('user:123', user, 3600);
-   * if (added) {
-   *   console.log('User was cached');
-   * } else {
-   *   console.log('User already exists in cache');
-   * }
-   * ```
    */
   async add<T = any>(key: string, value: T, ttl?: number): Promise<boolean> {
-    const exists = await this.has(key);
-    if (exists) {
+    if (await this.has(key)) {
       return false;
     }
 
@@ -260,73 +142,66 @@ export class CacheService implements CacheServiceInterface {
   }
 
   /**
-   * Increment a numeric value in the cache
+   * Store an item indefinitely (no expiration).
+   *
+   * @param key - Cache key
+   * @param value - Value to store
+   * @returns True if successful
+   */
+  async forever<T = any>(key: string, value: T): Promise<boolean> {
+    return this.store.forever(key, value);
+  }
+
+  // ──────────────────────────────────────────────────────────────────────────
+  // Increment / Decrement
+  // ──────────────────────────────────────────────────────────────────────────
+
+  /**
+   * Increment a numeric value.
    *
    * @param key - Cache key
    * @param value - Amount to increment by (default: 1)
-   * @returns The new value
-   *
-   * @example
-   * ```typescript
-   * await cache.increment('page:views');      // 1
-   * await cache.increment('page:views', 10);  // 11
-   * ```
+   * @returns The new value after incrementing
    */
-  increment(key: string, value: number = 1): Promise<number> {
-    const store = this.getDefaultStore();
-    return store.increment(key, value).then((result) => (typeof result === 'number' ? result : 0));
+  async increment(key: string, value: number = 1): Promise<number> {
+    const result = await this.store.increment(key, value);
+
+    return typeof result === 'number' ? result : 0;
   }
 
   /**
-   * Decrement a numeric value in the cache
+   * Decrement a numeric value.
    *
    * @param key - Cache key
    * @param value - Amount to decrement by (default: 1)
-   * @returns The new value
-   *
-   * @example
-   * ```typescript
-   * await cache.decrement('stock:product:123');     // -1
-   * await cache.decrement('stock:product:123', 5);  // -6
-   * ```
+   * @returns The new value after decrementing
    */
-  decrement(key: string, value: number = 1): Promise<number> {
-    const store = this.getDefaultStore();
-    return store.decrement(key, value).then((result) => (typeof result === 'number' ? result : 0));
+  async decrement(key: string, value: number = 1): Promise<number> {
+    const result = await this.store.decrement(key, value);
+
+    return typeof result === 'number' ? result : 0;
   }
 
-  /**
-   * Store an item indefinitely
-   *
-   * @param key - Cache key
-   * @param value - Value to cache
-   * @returns True if successful
-   *
-   * @example
-   * ```typescript
-   * await cache.forever('config:app', { theme: 'dark' });
-   * ```
-   */
-  forever<T = any>(key: string, value: T): Promise<boolean> {
-    const store = this.getDefaultStore();
-    return store.forever(key, value);
-  }
+  // ──────────────────────────────────────────────────────────────────────────
+  // Remember Pattern (get-or-set)
+  // ──────────────────────────────────────────────────────────────────────────
 
   /**
-   * Get an item from the cache, or execute the callback and store the result
+   * Get an item, or execute the callback and store the result.
    *
-   * This is the "remember" pattern from Laravel - get from cache if exists,
-   * otherwise execute callback, store result, and return it.
+   * This is the "remember" pattern from Laravel — the most common
+   * caching pattern. On cache hit, returns the cached value. On miss,
+   * executes the callback, stores the result, and returns it.
    *
    * @param key - Cache key
    * @param ttl - TTL in seconds
-   * @param callback - Function to execute if cache miss
-   * @returns The cached or computed value
+   * @param callback - Function to execute on cache miss
+   * @returns The cached or freshly computed value
    *
    * @example
    * ```typescript
    * const user = await cache.remember('user:123', 3600, async () => {
-   *   return await database.users.findById(123);
+   *   return await db.users.findById(123);
    * });
    * ```
    */
@@ -344,20 +219,13 @@ export class CacheService implements CacheServiceInterface {
   }
 
   /**
-   * Get an item from the cache, or execute the callback and store the result forever
+   * Get an item, or execute the callback and store the result forever.
    *
-   * Like remember(), but stores the result indefinitely.
+   * Like `remember()`, but the result never expires.
    *
    * @param key - Cache key
-   * @param callback - Function to execute if cache miss
-   * @returns The cached or computed value
-   *
-   * @example
-   * ```typescript
-   * const config = await cache.rememberForever('app:config', async () => {
-   *   return await loadConfigFromFile();
-   * });
-   * ```
+   * @param callback - Function to execute on cache miss
+   * @returns The cached or freshly computed value
    */
   async rememberForever<T = any>(key: string, callback: () => Promise<T> | T): Promise<T> {
     const cached = await this.get<T>(key);
@@ -372,288 +240,103 @@ export class CacheService implements CacheServiceInterface {
     return value;
   }
 
+  // ──────────────────────────────────────────────────────────────────────────
+  // Delete Operations
+  // ──────────────────────────────────────────────────────────────────────────
+
   /**
-   * Retrieve an item from the cache and delete it
+   * Retrieve an item and delete it from the cache.
    *
    * @param key - Cache key
-   * @param defaultValue - Default value if key doesn't exist
-   * @returns The cached value or default value
-   *
-   * @example
-   * ```typescript
-   * const token = await cache.pull('auth:token:abc123');
-   * // Token is now removed from cache
-   * ```
+   * @param defaultValue - Returned if the key doesn't exist
+   * @returns The cached value (now removed), or the default
    */
   async pull<T = any>(key: string, defaultValue?: T): Promise<T | undefined> {
     const value = await this.get<T>(key, defaultValue);
     await this.forget(key);
+
     return value;
   }
 
   /**
-   * Remove an item from the cache
+   * Remove an item from the cache.
    *
    * @param key - Cache key
    * @returns True if the item was removed
-   *
-   * @example
-   * ```typescript
-   * await cache.forget('user:123');
-   * ```
    */
-  forget(key: string): Promise<boolean> {
-    const store = this.getDefaultStore();
-    return store.forget(key);
+  async forget(key: string): Promise<boolean> {
+    return this.store.forget(key);
   }
 
   /**
-   * Remove all items from the cache
+   * Remove all items from the cache.
    *
    * @returns True if successful
-   *
-   * @example
-   * ```typescript
-   * await cache.flush(); // Clear entire cache
-   * ```
    */
-  flush(): Promise<boolean> {
-    const store = this.getDefaultStore();
-    return store.flush();
+  async flush(): Promise<boolean> {
+    return this.store.flush();
   }
 
+  // ──────────────────────────────────────────────────────────────────────────
+  // Tagging (Redis only)
+  // ──────────────────────────────────────────────────────────────────────────
+
   /**
-   * Begin executing a new tags operation
+   * Begin a tagged cache operation.
    *
-   * Only available if the store supports tagging (e.g., Redis).
+   * Only available when the underlying store supports tagging (e.g., Redis).
+   * Throws if the store doesn't implement the TaggableStore interface.
    *
    * @param names - Array of tag names
-   * @returns A TaggedCache instance
+   * @returns A TaggedCache instance scoped to the given tags
    * @throws Error if the store doesn't support tagging
-   *
-   * @example
-   * ```typescript
-   * const taggedCache = cache.tags(['users', 'premium']);
-   * await taggedCache.put('user:123', user, 3600);
-   * await taggedCache.flush(); // Flush all premium users
-   * ```
    */
   tags(names: string[]): TaggedCache {
-    const store = this.getDefaultStore();
-
-    if (!this.isTaggableStore(store)) {
+    if (!this.isTaggableStore(this.store)) {
       throw new Error(
-        `Cache store [${store.constructor.name}] does not support tagging. ` +
-          'Only Redis store supports cache tagging.'
+        `Cache store [${this.store.constructor.name}] does not support tagging. ` +
+          'Only the Redis store supports cache tagging.'
       );
     }
 
-    return store.tags(names);
+    return this.store.tags(names);
   }
 
+  // ──────────────────────────────────────────────────────────────────────────
+  // Accessors
+  // ──────────────────────────────────────────────────────────────────────────
+
   /**
-   * Get the cache key prefix
+   * Get the cache key prefix from the underlying store.
    *
    * @returns The prefix string
    */
   getPrefix(): string {
-    const store = this.getDefaultStore();
-    return store.getPrefix();
+    return this.store.getPrefix();
   }
 
   /**
-   * Get the default store name
+   * Get the underlying Store instance.
    *
-   * @returns Default store name
+   * Useful for advanced operations or type-narrowing.
+   *
+   * @returns The raw Store
    */
-  getDefaultStoreName(): string {
-    return this.config.default;
+  getStore(): Store {
+    return this.store;
   }
 
-  /**
-   * Get all configured store names
-   *
-   * @returns Array of store names
-   */
-  getStoreNames(): string[] {
-    return Object.keys(this.config.stores);
-  }
+  // ──────────────────────────────────────────────────────────────────────────
+  // Private Helpers
+  // ──────────────────────────────────────────────────────────────────────────
 
   /**
-   * Check if a store is configured
+   * Type guard: check if a store supports tagging.
    *
-   * @param name - Store name
-   * @returns True if the store is configured
+   * @param s - The store to check
+   * @returns True if the store has a `tags` method
    */
-  hasStore(name: string): boolean {
-    return name in this.config.stores;
-  }
-
-  /**
-   * Flush all stores
-   *
-   * Clears all cached data across all stores.
-   *
-   * @returns True if all stores were flushed successfully
-   *
-   * @example
-   * ```typescript
-   * await cache.flushAll();
-   * ```
-   */
-  async flushAll(): Promise<boolean> {
-    const results = await Promise.all(
-      Array.from(this.stores.values()).map((store) => store.flush())
-    );
-
-    return results.every((result) => result === true);
-  }
-
-  /**
-   * Get the default store instance
-   *
-   * @returns Store instance
-   * @throws Error if default store cannot be resolved
-   * @private
-   */
-  private getDefaultStore(): Store {
-    if (this.defaultStore) {
-      return this.defaultStore;
-    }
-
-    // Lazy initialize default store
-    const storeName = this.config.default;
-
-    if (this.stores.has(storeName)) {
-      this.defaultStore = this.stores.get(storeName)!;
-      return this.defaultStore;
-    }
-
-    this.defaultStore = this.resolve(storeName);
-    this.stores.set(storeName, this.defaultStore);
-
-    return this.defaultStore;
-  }
-
-  /**
-   * Resolve a store by name
-   *
-   * Creates a new store instance based on configuration.
-   *
-   * @param name - Store name
-   * @returns Store instance
-   * @throws Error if store is not configured or driver is invalid
-   * @private
-   */
-  private resolve(name: string): Store {
-    const storeConfig = this.config.stores[name];
-
-    if (!storeConfig) {
-      throw new Error(`Cache store [${name}] is not configured`);
-    }
-
-    // Build prefix (global + store-specific)
-    const prefix = this.buildPrefix(storeConfig);
-
-    // Create store based on driver
-    switch (storeConfig.driver) {
-      case 'memory':
-        return this.createMemoryStore(storeConfig, prefix);
-
-      case 'redis':
-        return this.createRedisStore(storeConfig, prefix);
-
-      case 'null':
-        return this.createNullStore(prefix);
-
-      default: {
-        // TypeScript exhaustiveness check - this should never be reached
-        const driver = (storeConfig as any).driver;
-        throw new Error(`Cache driver [${driver}] is not supported`);
-      }
-    }
-  }
-
-  /**
-   * Create a memory store
-   *
-   * @param config - Store configuration
-   * @param prefix - Cache key prefix
-   * @returns MemoryStore instance
-   * @private
-   */
-  private createMemoryStore(config: StoreConfig, prefix: string): MemoryStore {
-    // Runtime check - config should be MemoryStoreConfig
-    return new MemoryStore({
-      ttl: config.ttl,
-      maxSize: (config as any).maxSize,
-      prefix,
-    });
-  }
-
-  /**
-   * Create a Redis store
-   *
-   * @param config - Store configuration
-   * @param prefix - Cache key prefix
-   * @returns RedisStore instance
-   * @throws Error if Redis is not supported yet
-   * @private
-   */
-  private createRedisStore(_config: StoreConfig, _prefix: string): RedisStore {
-    throw new Error(
-      'Redis store is not yet implemented. ' +
-        'Please use MemoryStore or NullStore for now. ' +
-        'Redis support will be added in a future update.'
-    );
-  }
-
-  /**
-   * Create a null store
-   *
-   * @param prefix - Cache key prefix
-   * @returns NullStore instance
-   * @private
-   */
-  private createNullStore(prefix: string): NullStore {
-    return new NullStore({ prefix });
-  }
-
-  /**
-   * Build cache key prefix
-   *
-   * Combines global prefix with store-specific prefix.
-   *
-   * @param config - Store configuration
-   * @returns Combined prefix
-   * @private
-   */
-  private buildPrefix(config: StoreConfig): string {
-    const globalPrefix = this.config.prefix ?? '';
-    const storePrefix = config.prefix ?? '';
-    return globalPrefix + storePrefix;
-  }
-
-  /**
-   * Get default TTL for the current store
-   *
-   * @returns Default TTL in seconds
-   * @private
-   */
-  private getDefaultTtl(): number {
-    const storeName = this.config.default;
-    const storeConfig = this.config.stores[storeName];
-    return storeConfig?.ttl ?? 300; // 5 minutes default
-  }
-
-  /**
-   * Type guard to check if store supports tagging
-   *
-   * @param store - The store to check
-   * @returns True if the store supports tagging
-   * @private
-   */
-  private isTaggableStore(store: Store): store is TaggableStore {
-    return 'tags' in store && typeof (store as any).tags === 'function';
+  private isTaggableStore(s: Store): s is TaggableStore {
+    return 'tags' in s && typeof (s as any).tags === 'function';
   }
 }

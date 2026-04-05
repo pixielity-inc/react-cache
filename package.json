@@ -1,28 +1,51 @@
 {
-  "name": "@abdokouta/react-cache-monorepo",
-  "version": "1.0.0",
+  "name": "pixielity-frontend-monorepo",
+  "version": "0.0.0",
+  "description": "Production-ready Next.js monorepo template powered by Turborepo.",
   "private": true,
-  "description": "Laravel-inspired caching system with multiple drivers for React",
+  "homepage": "https://github.com/pixielity-inc/frontend-monorepo#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pixielity-inc/frontend-monorepo.git"
+  },
+  "bugs": {
+    "url": "https://github.com/pixielity-inc/frontend-monorepo/issues"
+  },
+  "license": "MIT",
+  "author": {
+    "name": "Your Name",
+    "email": "you@example.com",
+    "url": "https://example.com"
+  },
   "workspaces": [
-    "packages/*",
-    "examples/*"
+    "apps/*",
+    "packages/*"
   ],
   "scripts": {
     "build": "turbo run build",
     "dev": "turbo run dev",
+    "start": "turbo run start",
     "lint": "turbo run lint",
+    "lint:fix": "turbo run lint:fix",
     "test": "turbo run test",
-    "clean": "turbo run clean",
-    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
-    "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md}\""
+    "test:watch": "turbo run test:watch",
+    "check-types": "turbo run check-types",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md,yaml,yml}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md,yaml,yml}\"",
+    "clean": "turbo run clean && rm -rf .turbo",
+    "clean:all": "find . -type d \\( -name node_modules -o -name dist -o -name .turbo -o -name coverage -o -name .cache \\) -prune -exec rm -rf {} + && find . -type f \\( -name '*.lock' -o -name pnpm-lock.yaml -o -name yarn.lock -o -name package-lock.json \\) -delete",
+    "upgrade": "ncu -u && ncu -u --cwd packages/* && ncu -u --cwd examples/* && pnpm install"
   },
   "devDependencies": {
     "prettier": "^3.8.1",
-    "turbo": "^2.9.1"
+    "turbo": "^2.9.3",
+    "eslint": "*",
+    "@nesvel/eslint-config": "*",
+    "typescript": "5.9.2"
   },
-  "packageManager": "pnpm@10.32.1",
   "engines": {
-    "node": ">=20.0.0",
-    "pnpm": ">=10.0.0"
-  }
+    "node": ">=18",
+    "pnpm": ">=10"
+  },
+  "packageManager": "pnpm@10.33.0"
 }

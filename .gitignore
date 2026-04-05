@@ -31,3 +31,6 @@ coverage/
 .env.local
 .env.*.local
 example-app/
+
+# Turbo
+.turbo/
