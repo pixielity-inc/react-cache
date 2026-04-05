@@ -14,7 +14,7 @@
  * @module services/cache-manager
  */
 
-import { MultipleInstanceManager } from '@abdokouta/react-cache';
+import { MultipleInstanceManager } from '@abdokouta/react-support';
 
 import type { StoreConfig } from '@/types';
 import type { Store, CacheModuleOptions, RedisFactory } from '@/interfaces';
