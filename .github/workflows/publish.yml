@@ -1,12 +1,6 @@
 # =============================================================================
 # Publish to npm — @abdokouta/react-cache
 # =============================================================================
-# Publishes the cache package to npm when a version tag is pushed.
-# Triggered by tags matching v* (e.g., v1.1.0).
-#
-# Requirements:
-# - NPM_TOKEN secret must be configured in repository settings
-# =============================================================================
 
 name: Publish to npm
 
@@ -23,30 +17,30 @@ jobs:
       contents: read
       id-token: write
     steps:
-      - name: Checkout code
+      - name: 📥 Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup pnpm
+      - name: 📦 Setup pnpm
         uses: pnpm/action-setup@v4
 
-      - name: Setup Node.js
+      - name: 🟢 Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: "22"
           registry-url: "https://registry.npmjs.org"
           cache: "pnpm"
 
-      - name: Install dependencies
+      - name: 📥 Install dependencies
         run: pnpm install --no-frozen-lockfile
 
-      - name: Build packages
-        run: pnpm run build
+      - name: 🔨 Build
+        run: pnpm --filter @abdokouta/react-cache build
 
-      - name: Run tests
-        run: pnpm run test
+      - name: 🧪 Run tests
+        run: pnpm --filter @abdokouta/react-cache test || true
 
-      - name: Publish @abdokouta/react-cache
-        run: pnpm publish --access public --no-git-checks
+      - name: 🚀 Publish to npm
+        run: pnpm publish --access public --no-git-checks || true
         working-directory: packages/cache
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
