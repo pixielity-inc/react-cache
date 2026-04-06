@@ -1,26 +1,35 @@
 import 'reflect-metadata';
-import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
-import { Container } from '@abdokouta/react-di';
-
-import App from './App.tsx';
-import { Provider } from './provider.tsx';
+import { ApplicationContext } from '@abdokouta/ts-application';
+import { ContainerProvider } from '@abdokouta/ts-container-react';
 import { AppModule } from '@/modules/app.module';
+import App from './App';
 import '@/styles/globals.css';
 
-Container.configure()
-  .withModule(AppModule)
-  .withLogLevel(import.meta.env.DEV ? 'debug' : 'info')
-  .withDefaultScope('Singleton')
-  .build();
+/**
+ * Bootstrap the DI container, then render the React app.
+ *
+ * ApplicationContext.create() scans the module tree, resolves all
+ * providers, and calls onModuleInit() lifecycle hooks.
+ * The resulting context is passed to ContainerProvider so all
+ * components can use useInject() to resolve services.
+ */
+async function bootstrap() {
+  const app = await ApplicationContext.create(AppModule);
 
-ReactDOM.createRoot(document.getElementById('root')!).render(
-  <React.StrictMode>
+  // Make it available on window for debugging
+  if (import.meta.env.DEV) {
+    (window as any).__APP_CONTEXT__ = app;
+  }
+
+  ReactDOM.createRoot(document.getElementById('root')!).render(
     <BrowserRouter>
-      <Provider>
+      <ContainerProvider context={app}>
         <App />
-      </Provider>
+      </ContainerProvider>
     </BrowserRouter>
-  </React.StrictMode>
-);
+  );
+}
+
+bootstrap().catch(console.error);

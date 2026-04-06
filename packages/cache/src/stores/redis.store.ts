@@ -28,7 +28,9 @@ export class RedisStore implements TaggableStore {
     this.connectionName = connection;
   }
 
-  /** Resolve connection lazily and cache it. */
+  /** 
+ * Resolve connection lazily and cache it. 
+ */
   private async conn(): Promise<RedisConnection> {
     if (!this._connection) {
       this._connection = await this.redisService.connection(this.connectionName);

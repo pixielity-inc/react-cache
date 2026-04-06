@@ -41,7 +41,7 @@
     "turbo": "^2.9.3",
     "eslint": "*",
     "@nesvel/eslint-config": "*",
-    "typescript": "5.9.2"
+    "typescript": "6.0.2"
   },
   "engines": {
     "node": ">=18",

@@ -14,13 +14,13 @@
 import { vi } from 'vitest';
 
 /**
- * Mock @abdokouta/react-di decorators
+ * Mock @abdokouta/ts-container decorators
  *
  * This ensures that decorator metadata doesn't interfere with tests
  * and allows us to test module behavior in isolation.
  */
-vi.mock('@abdokouta/react-di', async () => {
-  const actual = await vi.importActual('@abdokouta/react-di');
+vi.mock('@abdokouta/ts-container', async () => {
+  const actual = await vi.importActual('@abdokouta/ts-container');
   return {
     ...actual,
     Injectable: () => (target: any) => target,

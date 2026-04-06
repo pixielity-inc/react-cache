@@ -6,7 +6,7 @@
  * @module @abdokouta/react-cache
  */
 
-import type { CacheModuleOptions } from '../interfaces';
+import type { CacheModuleOptions } from '@/interfaces';
 
 /**
  * Helper function to define cache configuration with type safety

@@ -11,7 +11,7 @@
 
 <p align="center">
   Laravel-inspired caching system with multiple drivers for React applications.<br/>
-  Built on top of <a href="https://www.npmjs.com/package/@abdokouta/react-di">@abdokouta/react-di</a> for seamless dependency injection.
+  Built on top of <a href="https://www.npmjs.com/package/@abdokouta/ts-container">@abdokouta/ts-container</a> for seamless dependency injection.
 </p>
 
 ---
@@ -59,7 +59,7 @@
   (Redis)
 - **React Hooks** — `useCache()` and `useCachedQuery()` for component-level
   caching
-- **Dependency Injection** — First-class DI support via `@abdokouta/react-di`
+- **Dependency Injection** — First-class DI support via `@abdokouta/ts-container`
 - **Type-Safe Configuration** — `defineConfig()` helper with full autocomplete
 - **TTL Support** — Per-operation and per-store default TTL
 - **Key Prefixing** — Global and per-store prefixes to avoid collisions
@@ -73,13 +73,13 @@
 
 ```bash
 # npm
-npm install @abdokouta/react-cache @abdokouta/react-di
+npm install @abdokouta/react-cache @abdokouta/ts-container
 
 # pnpm
-pnpm add @abdokouta/react-cache @abdokouta/react-di
+pnpm add @abdokouta/react-cache @abdokouta/ts-container
 
 # yarn
-yarn add @abdokouta/react-cache @abdokouta/react-di
+yarn add @abdokouta/react-cache @abdokouta/ts-container
 ```
 
 For Redis support, also install:
@@ -93,7 +93,7 @@ pnpm add @abdokouta/react-redis
 ## Quick Start
 
 ```typescript
-import { Module } from '@abdokouta/react-di';
+import { Module } from '@abdokouta/ts-container';
 import { CacheModule } from '@abdokouta/react-cache';
 
 @Module({
@@ -641,7 +641,7 @@ If you're coming from Laravel, here's how the API maps:
 
 - Node.js >= 18.0.0
 - React 18 or 19
-- `@abdokouta/react-di` (dependency injection)
+- `@abdokouta/ts-container` (dependency injection)
 - `@abdokouta/react-redis` (optional, for Redis driver)
 
 ---

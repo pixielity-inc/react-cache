@@ -72,10 +72,10 @@ export default defineConfig({
   /**
    * External dependencies that should not be bundled.
    *
-   * - @abdokouta/react-di: DI system (peer dependency)
+   * - @abdokouta/ts-container: DI system (peer dependency)
    * - react: React library (optional peer dependency for hooks)
    */
-  external: ['@abdokouta/react-di', 'react'],
+  external: ['@abdokouta/ts-container', 'react'],
 
   /**
    * Disable code splitting for library builds.

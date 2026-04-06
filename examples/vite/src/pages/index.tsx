@@ -1,14 +1,13 @@
 import { useState } from 'react';
 import { Button, Card, Chip } from '@heroui/react';
-import { CacheService, CACHE_SERVICE } from '@abdokouta/react-cache';
-import { useInject } from '@abdokouta/react-di';
+import { useCache } from '@abdokouta/react-cache';
 
 import { title, subtitle } from '@/components/primitives';
 import { GithubIcon } from '@/components/icons';
 import DefaultLayout from '@/layouts/default';
 
 export default function IndexPage() {
-  const cache = useInject<CacheService>(CACHE_SERVICE);
+  const cache = useCache();
 
   const [result, setResult] = useState<string | null>(null);
   const [counter, setCounter] = useState<number | null>(null);
@@ -101,7 +100,7 @@ export default function IndexPage() {
             <pre className="text-sm font-medium font-mono">
               pnpm add{' '}
               <code className="px-2 py-1 h-fit font-mono font-normal inline whitespace-nowrap rounded-sm bg-accent/20 text-accent text-sm">
-                @abdokouta/react-cache @abdokouta/react-di
+                @abdokouta/react-cache @abdokouta/ts-container
               </code>
             </pre>
           </div>

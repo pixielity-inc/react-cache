@@ -10,14 +10,14 @@
  * - Cache invalidation
  * - Configurable TTL
  *
- * **Note:** This requires React and @abdokouta/react-di to be installed.
+ * **Note:** This requires React and @abdokouta/ts-container to be installed.
  *
  * @module hooks/use-cached-query
  */
 
 import { useState, useEffect, useCallback } from 'react';
 
-import { useCache } from '../use-cache';
+import { useCache } from '@/hooks/use-cache/use-cache.hook';
 import type { UseCachedQueryResult } from '@/interfaces/use-cached-query-result.interface';
 import type { UseCachedQueryOptions } from '@/interfaces/use-cached-query-options.interface';
 

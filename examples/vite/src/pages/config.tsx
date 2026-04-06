@@ -1,6 +1,6 @@
 import { Card, Chip, Separator } from '@heroui/react';
 import { CacheManager, CACHE_MANAGER } from '@abdokouta/react-cache';
-import { useInject } from '@abdokouta/react-di';
+import { useInject } from '@abdokouta/ts-container';
 
 import { title } from '@/components/primitives';
 import DefaultLayout from '@/layouts/default';
@@ -102,7 +102,7 @@ export default defineConfig({
             <Card className="p-6">
               <pre className="text-sm font-mono overflow-x-auto whitespace-pre">
                 {`// modules/app.module.ts
-import { Module } from "@abdokouta/react-di";
+import { Module } from "@abdokouta/ts-container";
 import { CacheModule } from "@abdokouta/react-cache";
 import cacheConfig from "@/config/cache.config";
 
@@ -126,7 +126,7 @@ export class AppModule {}`}
                 <h3 className="text-lg font-bold mb-3">Via DI</h3>
                 <pre className="text-sm font-mono overflow-x-auto whitespace-pre">
                   {`import { CacheService } from "@abdokouta/react-cache";
-import { useInject } from "@abdokouta/react-di";
+import { useInject } from "@abdokouta/ts-container";
 
 const cache = useInject<CacheService>(CacheService);
 

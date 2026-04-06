@@ -9,7 +9,7 @@
  * Basic usage with memory store:
  * ```typescript
  * import { CacheModule, CacheService } from '@abdokouta/react-cache';
- * import { Module, Injectable, Inject } from '@abdokouta/react-di';
+ * import { Module, Injectable, Inject } from '@abdokouta/ts-container';
  *
  * @Module({
  *   imports: [

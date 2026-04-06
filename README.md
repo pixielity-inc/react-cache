@@ -1,18 +1,18 @@
 <p align="center">
-  <img src="./assets/banner.svg" alt="@abdokouta/react-di" width="100%" />
+  <img src="./assets/banner.svg" alt="@abdokouta/ts-container" width="100%" />
 </p>
 
-<h1 align="center">@abdokouta/react-di</h1>
+<h1 align="center">@abdokouta/ts-container</h1>
 
 <p align="center">
   <strong>Powerful dependency injection for React with NestJS-style modules</strong>
 </p>
 
 <p align="center">
-  <a href="https://www.npmjs.com/package/@abdokouta/react-di"><img src="https://img.shields.io/npm/v/@abdokouta/react-di.svg?style=flat-square" alt="npm version" /></a>
-  <a href="https://www.npmjs.com/package/@abdokouta/react-di"><img src="https://img.shields.io/npm/dm/@abdokouta/react-di.svg?style=flat-square" alt="npm downloads" /></a>
-  <a href="https://github.com/abdokouta/react-di/blob/main/LICENSE"><img src="https://img.shields.io/npm/l/@abdokouta/react-di.svg?style=flat-square" alt="license" /></a>
-  <a href="https://github.com/abdokouta/react-di"><img src="https://img.shields.io/github/stars/abdokouta/react-di?style=flat-square" alt="GitHub stars" /></a>
+  <a href="https://www.npmjs.com/package/@abdokouta/ts-container"><img src="https://img.shields.io/npm/v/@abdokouta/ts-container.svg?style=flat-square" alt="npm version" /></a>
+  <a href="https://www.npmjs.com/package/@abdokouta/ts-container"><img src="https://img.shields.io/npm/dm/@abdokouta/ts-container.svg?style=flat-square" alt="npm downloads" /></a>
+  <a href="https://github.com/abdokouta/ts-container/blob/main/LICENSE"><img src="https://img.shields.io/npm/l/@abdokouta/ts-container.svg?style=flat-square" alt="license" /></a>
+  <a href="https://github.com/abdokouta/ts-container"><img src="https://img.shields.io/github/stars/abdokouta/ts-container?style=flat-square" alt="GitHub stars" /></a>
 </p>
 
 <p align="center">
@@ -35,7 +35,7 @@
 ## 📦 Installation
 
 ```bash
-npm install @abdokouta/react-di reflect-metadata
+npm install @abdokouta/ts-container reflect-metadata
 ```
 
 ## 🚀 Quick Start
@@ -45,7 +45,7 @@ npm install @abdokouta/react-di reflect-metadata
 ```typescript
 // main.tsx
 import "reflect-metadata";
-import { Container, ContainerProvider } from "@abdokouta/react-di";
+import { Container, ContainerProvider } from "@abdokouta/ts-container";
 import { AppModule } from "./modules/app.module";
 
 Container
@@ -65,7 +65,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
 ### 2. Create Services
 
 ```typescript
-import { Injectable, Inject } from '@abdokouta/react-di';
+import { Injectable, Inject } from '@abdokouta/ts-container';
 
 @Injectable()
 export class LoggerService {
@@ -88,7 +88,7 @@ export class UserService {
 ### 3. Create Modules
 
 ```typescript
-import { Module } from '@abdokouta/react-di';
+import { Module } from '@abdokouta/ts-container';
 
 @Module({
   providers: [LoggerService, UserService],
@@ -99,7 +99,7 @@ export class AppModule {}
 ### 4. Use in Components
 
 ```typescript
-import { useInject } from "@abdokouta/react-di";
+import { useInject } from "@abdokouta/ts-container";
 
 export function UserList() {
   const userService = useInject(UserService);
@@ -136,7 +136,7 @@ Container.configure().withModule(AppModule).withDefaults().build();
 ## 🌍 Global Modules
 
 ```typescript
-import { Module, Global } from '@abdokouta/react-di';
+import { Module, Global } from '@abdokouta/ts-container';
 
 @Global()
 @Module({
@@ -148,7 +148,7 @@ export class LoggerModule {}
 ## 🔄 Dynamic Modules
 
 ```typescript
-import { Module, forRoot, type DynamicModule } from '@abdokouta/react-di';
+import { Module, forRoot, type DynamicModule } from '@abdokouta/ts-container';
 
 @Module({})
 export class ConfigModule {

@@ -1,342 +1,146 @@
 /**
- * Cache Service
+ * Cache Service (Repository)
  *
- * The public-facing API for cache operations, wrapping a single Store instance.
- * This mirrors Laravel's `Illuminate\Cache\Service` — all the convenient
- * methods like `remember`, `pull`, `add`, `tags` live here.
+ * The high-level API that consumers interact with. Wraps a Store
+ * and provides convenience methods: get, put, remember, tags, etc.
  *
- * Users never create this directly. It's returned by `CacheManager.store()`.
+ * This is NOT injectable — it's created by CacheManager.store().
+ * Each store gets its own CacheService instance.
  *
- * **Laravel Comparison:**
- * - `Cache::get('key')` → `service.get('key')`
- * - `Cache::put('key', val, 3600)` → `service.put('key', val, 3600)`
- * - `Cache::remember('key', 3600, fn)` → `service.remember('key', 3600, fn)`
- * - `Cache::tags(['users'])->flush()` → `service.tags(['users']).flush()`
- * - `Cache::pull('key')` → `service.pull('key')`
- * - `Cache::add('key', val, 3600)` → `service.add('key', val, 3600)`
- *
- * @module services/cache-service
+ * @module services/cache
  */
 
 import type { Store, TaggableStore, TaggedCache } from '@/interfaces';
 
 /**
- * Cache Service
+ * CacheService — the consumer-facing cache API.
  *
- * Wraps a single Store and provides the full cache API.
+ * Created by `CacheManager.store(name)`. Wraps a low-level Store
+ * with a rich API including remember(), tags(), pull(), etc.
  *
  * @example
  * ```typescript
- * const cache = cacheManager.store(); // returns CacheService
+ * const cache = manager.store('redis');
  *
- * await cache.put('user:123', user, 3600);
- * const user = await cache.get('user:123');
- *
- * const data = await cache.remember('key', 600, async () => fetchData());
- *
- * await cache.tags(['users']).flush(); // Redis only
+ * await cache.put('key', 'value', 3600);
+ * const value = await cache.get('key');
+ * const user = await cache.remember('user:1', 3600, () => fetchUser(1));
+ * await cache.tags(['users']).flush();
  * ```
  */
 export class CacheService {
-  /**
-   * The underlying cache store.
-   */
-  private readonly store: Store;
+  constructor(
+    private readonly _store: Store,
+    private _defaultTtl: number = 300,
+  ) {}
 
-  /**
-   * Default TTL in seconds, from the store's config.
-   */
-  private readonly defaultTtl: number;
+  // ── Read ────────────────────────────────────────────────────────────────
 
-  /**
-   * Create a new cache service.
-   *
-   * @param store - The Store instance to wrap
-   * @param defaultTtl - Default TTL in seconds (used when no TTL is specified)
-   */
-  constructor(store: Store, defaultTtl: number = 300) {
-    this.store = store;
-    this.defaultTtl = defaultTtl;
-  }
-
-  // ──────────────────────────────────────────────────────────────────────────
-  // Read Operations
-  // ──────────────────────────────────────────────────────────────────────────
-
-  /**
-   * Determine if an item exists in the cache.
-   *
-   * @param key - Cache key
-   * @returns True if the key exists and is not undefined/null
-   */
   async has(key: string): Promise<boolean> {
-    const value = await this.store.get(key);
-
+    const value = await this._store.get(key);
     return value !== undefined && value !== null;
   }
 
-  /**
-   * Retrieve an item from the cache.
-   *
-   * @param key - Cache key
-   * @param defaultValue - Returned if the key doesn't exist
-   * @returns The cached value, or the default
-   */
   async get<T = any>(key: string, defaultValue?: T): Promise<T | undefined> {
-    const value = await this.store.get(key);
-
+    const value = await this._store.get(key);
     return value !== undefined ? value : defaultValue;
   }
 
-  /**
-   * Retrieve multiple items from the cache.
-   *
-   * @param keys - Array of cache keys
-   * @returns Object mapping keys to their values
-   */
   async many<T = any>(keys: string[]): Promise<Record<string, T>> {
-    return this.store.many(keys);
+    return this._store.many(keys);
   }
 
-  // ──────────────────────────────────────────────────────────────────────────
-  // Write Operations
-  // ──────────────────────────────────────────────────────────────────────────
+  // ── Write ───────────────────────────────────────────────────────────────
 
-  /**
-   * Store an item in the cache.
-   *
-   * @param key - Cache key
-   * @param value - Value to store
-   * @param ttl - TTL in seconds (defaults to store config TTL)
-   * @returns True if successful
-   */
   async put<T = any>(key: string, value: T, ttl?: number): Promise<boolean> {
-    return this.store.put(key, value, ttl ?? this.defaultTtl);
+    return this._store.put(key, value, ttl ?? this._defaultTtl);
   }
 
-  /**
-   * Store multiple items in the cache.
-   *
-   * @param values - Object mapping keys to values
-   * @param ttl - TTL in seconds (defaults to store config TTL)
-   * @returns True if successful
-   */
   async putMany<T = any>(values: Record<string, T>, ttl?: number): Promise<boolean> {
-    return this.store.putMany(values, ttl ?? this.defaultTtl);
+    return this._store.putMany(values, ttl ?? this._defaultTtl);
   }
 
-  /**
-   * Store an item only if the key doesn't already exist.
-   *
-   * @param key - Cache key
-   * @param value - Value to store
-   * @param ttl - TTL in seconds
-   * @returns True if the item was added, false if it already existed
-   */
   async add<T = any>(key: string, value: T, ttl?: number): Promise<boolean> {
-    if (await this.has(key)) {
-      return false;
-    }
-
+    if (await this.has(key)) return false;
     return this.put(key, value, ttl);
   }
 
-  /**
-   * Store an item indefinitely (no expiration).
-   *
-   * @param key - Cache key
-   * @param value - Value to store
-   * @returns True if successful
-   */
   async forever<T = any>(key: string, value: T): Promise<boolean> {
-    return this.store.forever(key, value);
+    return this._store.forever(key, value);
   }
 
-  // ──────────────────────────────────────────────────────────────────────────
-  // Increment / Decrement
-  // ──────────────────────────────────────────────────────────────────────────
+  // ── Counters ────────────────────────────────────────────────────────────
 
-  /**
-   * Increment a numeric value.
-   *
-   * @param key - Cache key
-   * @param value - Amount to increment by (default: 1)
-   * @returns The new value after incrementing
-   */
   async increment(key: string, value: number = 1): Promise<number> {
-    const result = await this.store.increment(key, value);
-
+    const result = await this._store.increment(key, value);
     return typeof result === 'number' ? result : 0;
   }
 
-  /**
-   * Decrement a numeric value.
-   *
-   * @param key - Cache key
-   * @param value - Amount to decrement by (default: 1)
-   * @returns The new value after decrementing
-   */
   async decrement(key: string, value: number = 1): Promise<number> {
-    const result = await this.store.decrement(key, value);
-
+    const result = await this._store.decrement(key, value);
     return typeof result === 'number' ? result : 0;
   }
 
-  // ──────────────────────────────────────────────────────────────────────────
-  // Remember Pattern (get-or-set)
-  // ──────────────────────────────────────────────────────────────────────────
+  // ── Remember ────────────────────────────────────────────────────────────
 
-  /**
-   * Get an item, or execute the callback and store the result.
-   *
-   * This is the "remember" pattern from Laravel — the most common
-   * caching pattern. On cache hit, returns the cached value. On miss,
-   * executes the callback, stores the result, and returns it.
-   *
-   * @param key - Cache key
-   * @param ttl - TTL in seconds
-   * @param callback - Function to execute on cache miss
-   * @returns The cached or freshly computed value
-   *
-   * @example
-   * ```typescript
-   * const user = await cache.remember('user:123', 3600, async () => {
-   *   return await db.users.findById(123);
-   * });
-   * ```
-   */
-  async remember<T = any>(key: string, ttl: number, callback: () => Promise<T> | T): Promise<T> {
+  async remember<T = any>(key: string, ttl: number, cb: () => Promise<T> | T): Promise<T> {
     const cached = await this.get<T>(key);
-
-    if (cached !== undefined) {
-      return cached;
-    }
-
-    const value = await callback();
+    if (cached !== undefined) return cached;
+    const value = await cb();
     await this.put(key, value, ttl);
-
     return value;
   }
 
-  /**
-   * Get an item, or execute the callback and store the result forever.
-   *
-   * Like `remember()`, but the result never expires.
-   *
-   * @param key - Cache key
-   * @param callback - Function to execute on cache miss
-   * @returns The cached or freshly computed value
-   */
-  async rememberForever<T = any>(key: string, callback: () => Promise<T> | T): Promise<T> {
+  async rememberForever<T = any>(key: string, cb: () => Promise<T> | T): Promise<T> {
     const cached = await this.get<T>(key);
-
-    if (cached !== undefined) {
-      return cached;
-    }
-
-    const value = await callback();
+    if (cached !== undefined) return cached;
+    const value = await cb();
     await this.forever(key, value);
-
     return value;
   }
 
-  // ──────────────────────────────────────────────────────────────────────────
-  // Delete Operations
-  // ──────────────────────────────────────────────────────────────────────────
+  // ── Delete ──────────────────────────────────────────────────────────────
 
-  /**
-   * Retrieve an item and delete it from the cache.
-   *
-   * @param key - Cache key
-   * @param defaultValue - Returned if the key doesn't exist
-   * @returns The cached value (now removed), or the default
-   */
   async pull<T = any>(key: string, defaultValue?: T): Promise<T | undefined> {
     const value = await this.get<T>(key, defaultValue);
     await this.forget(key);
-
     return value;
   }
 
-  /**
-   * Remove an item from the cache.
-   *
-   * @param key - Cache key
-   * @returns True if the item was removed
-   */
   async forget(key: string): Promise<boolean> {
-    return this.store.forget(key);
+    return this._store.forget(key);
   }
 
-  /**
-   * Remove all items from the cache.
-   *
-   * @returns True if successful
-   */
   async flush(): Promise<boolean> {
-    return this.store.flush();
+    return this._store.flush();
   }
 
-  // ──────────────────────────────────────────────────────────────────────────
-  // Tagging (Redis only)
-  // ──────────────────────────────────────────────────────────────────────────
+  // ── Tags ────────────────────────────────────────────────────────────────
 
-  /**
-   * Begin a tagged cache operation.
-   *
-   * Only available when the underlying store supports tagging (e.g., Redis).
-   * Throws if the store doesn't implement the TaggableStore interface.
-   *
-   * @param names - Array of tag names
-   * @returns A TaggedCache instance scoped to the given tags
-   * @throws Error if the store doesn't support tagging
-   */
   async tags(names: string[]): Promise<TaggedCache> {
-    if (!this.isTaggableStore(this.store)) {
-      throw new Error(
-        `Cache store [${this.store.constructor.name}] does not support tagging. ` +
-          'Only the Redis store supports cache tagging.'
-      );
+    const s = this._store;
+    if (!('tags' in s && typeof (s as any).tags === 'function')) {
+      throw new Error(`Store [${s.constructor.name}] does not support tagging.`);
     }
-
-    return this.store.tags(names);
+    return (s as TaggableStore).tags(names);
   }
 
-  // ──────────────────────────────────────────────────────────────────────────
-  // Accessors
-  // ──────────────────────────────────────────────────────────────────────────
+  // ── Accessors ───────────────────────────────────────────────────────────
 
-  /**
-   * Get the cache key prefix from the underlying store.
-   *
-   * @returns The prefix string
-   */
   getPrefix(): string {
-    return this.store.getPrefix();
+    return this._store.getPrefix();
   }
 
-  /**
-   * Get the underlying Store instance.
-   *
-   * Useful for advanced operations or type-narrowing.
-   *
-   * @returns The raw Store
-   */
   getStore(): Store {
-    return this.store;
+    return this._store;
   }
 
-  // ──────────────────────────────────────────────────────────────────────────
-  // Private Helpers
-  // ──────────────────────────────────────────────────────────────────────────
+  getDefaultTtl(): number {
+    return this._defaultTtl;
+  }
 
-  /**
-   * Type guard: check if a store supports tagging.
-   *
-   * @param s - The store to check
-   * @returns True if the store has a `tags` method
-   */
-  private isTaggableStore(s: Store): s is TaggableStore {
-    return 'tags' in s && typeof (s as any).tags === 'function';
+  setTtl(seconds: number): this {
+    this._defaultTtl = seconds;
+    return this;
   }
 }

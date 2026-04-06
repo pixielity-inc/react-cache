@@ -1,13 +1,13 @@
 import { useState } from 'react';
 import { Button, Card, Chip, Separator } from '@heroui/react';
-import { CacheService, CacheManager, CACHE_SERVICE, CACHE_MANAGER } from '@abdokouta/react-cache';
-import { useInject } from '@abdokouta/react-di';
+import { CacheManager, CACHE_MANAGER, useCache } from '@abdokouta/react-cache';
+import { useInject } from '@abdokouta/ts-container-react';
 
 import { title } from '@/components/primitives';
 import DefaultLayout from '@/layouts/default';
 
 export default function AdvancedPage() {
-  const cache = useInject<CacheService>(CACHE_SERVICE);
+  const cache = useCache();
   const manager = useInject<CacheManager>(CACHE_MANAGER);
 
   // Basic ops state

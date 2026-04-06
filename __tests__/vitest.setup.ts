@@ -16,12 +16,12 @@
 import { expect, beforeEach, afterEach, vi } from 'vitest';
 
 /**
- * Mock @abdokouta/react-di decorators
+ * Mock @abdokouta/ts-container decorators
  *
  * This ensures that Injectable and Inject decorators work in tests
  * without requiring the full DI container setup.
  */
-vi.mock('@abdokouta/react-di', () => ({
+vi.mock('@abdokouta/ts-container', () => ({
   Injectable: () => (target: any) => target,
   Inject: () => (target: any, propertyKey: string, parameterIndex: number) => {},
   Module: () => (target: any) => target,

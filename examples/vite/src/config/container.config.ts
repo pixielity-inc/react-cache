@@ -3,10 +3,10 @@
  *
  * Default configuration values for the DI container.
  *
- * @module @abdokouta/react-di
+ * @module @abdokouta/ts-container
  * @category Config
  */
-import { defineConfig } from '@abdokouta/react-di';
+import { defineConfig } from '@abdokouta/ts-container';
 
 /**
  * Default container configuration

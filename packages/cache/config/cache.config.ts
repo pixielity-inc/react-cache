@@ -1,74 +1,36 @@
 /**
  * Cache Configuration
  *
- * Unified cache configuration following Laravel and NestJS patterns.
- * All cache stores and settings are defined in a single config object.
+ * Pure data config — no instances, no connections.
+ * Redis connections are resolved at runtime by the RedisFactory
+ * registered in the DI container.
  *
  * @module config/cache
- *
- * @example
- * ```typescript
- * import cacheConfig from '@abdokouta/react-cache/config';
- *
- * CacheModule.forRoot(cacheConfig);
- * ```
  */
 
 import { defineConfig } from '@abdokouta/react-cache';
 
-/**
- * Cache configuration
- *
- * Adapts to your environment via Vite environment variables.
- *
- * Environment Variables:
- * - VITE_CACHE_DRIVER: Default cache driver (default: 'memory')
- * - VITE_CACHE_PREFIX: Global cache key prefix (default: 'app_')
- * - VITE_CACHE_MEMORY_MAX_SIZE: Memory store max entries (default: 1000)
- * - VITE_CACHE_MEMORY_TTL: Memory store TTL in seconds (default: 300)
- * - VITE_REDIS_CACHE_CONNECTION: Redis connection name (default: 'cache')
- * - VITE_CACHE_REDIS_PREFIX: Redis key prefix (default: 'cache_')
- * - VITE_CACHE_REDIS_TTL: Redis TTL in seconds (default: 3600)
- * - VITE_REDIS_SESSION_CONNECTION: Session Redis connection (default: 'session')
- * - VITE_CACHE_SESSION_TTL: Session TTL in seconds (default: 86400)
- */
 const cacheConfig = defineConfig({
-  /*
-  |--------------------------------------------------------------------------
-  | Global Registration
-  |--------------------------------------------------------------------------
-  |
-  | When true, cache providers are available to all modules without
-  | explicit imports. Set to false if you want scoped registration.
-  |
-  */
-  isGlobal: true,
-
-  /*
-  |--------------------------------------------------------------------------
-  | Default Cache Store
-  |--------------------------------------------------------------------------
-  */
+  /**
+   * Default store — switch via VITE_CACHE_DRIVER env var.
+   */
   default: import.meta.env.VITE_CACHE_DRIVER || 'memory',
 
-  /*
-  |--------------------------------------------------------------------------
-  | Cache Stores
-  |--------------------------------------------------------------------------
-  */
   stores: {
     /**
-     * Fast in-memory cache for development and frequently accessed data.
+     * In-memory cache. Fast, no dependencies. Lost on refresh.
      */
     memory: {
       driver: 'memory',
-      maxSize: Number(import.meta.env.VITE_CACHE_MEMORY_MAX_SIZE) || 1000,
+      maxSize: Number(import.meta.env.VITE_CACHE_MEMORY_MAX_SIZE) || 100,
       ttl: Number(import.meta.env.VITE_CACHE_MEMORY_TTL) || 300,
       prefix: 'mem_',
     },
 
     /**
-     * Persistent Redis cache for production. Supports tagging.
+     * Redis cache via Upstash.
+     * The connection name "cache" is resolved by the RedisFactory
+     * registered under REDIS_FACTORY in the DI container.
      */
     redis: {
       driver: 'redis',
@@ -78,7 +40,7 @@ const cacheConfig = defineConfig({
     },
 
     /**
-     * Dedicated Redis store for session data with longer TTL.
+     * Session store — longer TTL, separate Redis connection.
      */
     session: {
       driver: 'redis',
@@ -88,18 +50,16 @@ const cacheConfig = defineConfig({
     },
 
     /**
-     * No-op cache for testing or disabling cache.
+     * No-op cache for testing.
      */
     null: {
       driver: 'null',
     },
   },
 
-  /*
-  |--------------------------------------------------------------------------
-  | Cache Key Prefix
-  |--------------------------------------------------------------------------
-  */
+  /**
+   * Global key prefix applied to all stores.
+   */
   prefix: import.meta.env.VITE_CACHE_PREFIX || 'app_',
 });
 
