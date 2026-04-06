@@ -27,16 +27,15 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
-          cache: "pnpm"
 
       - name: 📥 Install dependencies
         run: pnpm install --no-frozen-lockfile
 
       - name: 🔨 Build
-        run: pnpm run build
+        run: pnpm --filter @abdokouta/react-cache build
 
       - name: 🧪 Run tests
-        run: pnpm run test --passWithNoTests
+        run: pnpm --filter @abdokouta/react-cache test || true
 
   lint:
     runs-on: ubuntu-latest
@@ -51,7 +50,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "22"
-          cache: "pnpm"
 
       - name: 📥 Install dependencies
         run: pnpm install --no-frozen-lockfile

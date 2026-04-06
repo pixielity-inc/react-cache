@@ -61,15 +61,25 @@
     "release": "pnpm publish --access public --no-git-checks"
   },
   "dependencies": {
-    "@abdokouta/ts-container-react": "^1.2.0",
-    "@abdokouta/ts-container": "^1.2.0",
-    "@abdokouta/react-redis": "^1.1.2",
-    "@abdokouta/react-support": "^2.1.0"
+    "@upstash/redis": "^1.37.0"
   },
   "peerDependencies": {
+    "@abdokouta/ts-container": "^1.2.0",
+    "@abdokouta/ts-container-react": "^1.2.0",
+    "@abdokouta/react-support": "^2.1.0",
+    "@abdokouta/react-redis": "^1.1.2",
     "react": "^18.0.0 || ^19.0.0"
   },
   "peerDependenciesMeta": {
+    "@abdokouta/ts-container": {
+      "optional": false
+    },
+    "@abdokouta/react-support": {
+      "optional": false
+    },
+    "@abdokouta/ts-container-react": {
+      "optional": true
+    },
     "@abdokouta/react-redis": {
       "optional": true
     },
